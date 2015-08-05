@@ -2,6 +2,15 @@ Build.PL
 Changes
 MANIFEST
 lib/Web/ComposableRequest.pm
+lib/Web/ComposableRequest/Base.pm
+lib/Web/ComposableRequest/Config.pm
+lib/Web/ComposableRequest/Constants.pm
+lib/Web/ComposableRequest/Exception.pm
+lib/Web/ComposableRequest/Role/L10N.pm
+lib/Web/ComposableRequest/Role/Session.pm
+lib/Web/ComposableRequest/Role/Static.pm
+lib/Web/ComposableRequest/Session.pm
+lib/Web/ComposableRequest/Util.pm
 t/02pod.t
 t/03podcoverage.t
 t/05kwalitee.t

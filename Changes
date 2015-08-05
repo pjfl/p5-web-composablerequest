@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Updated prereqs
           - Passing initial 10test_script.t
 
 0.1.1     2015-08-03 01:04:57

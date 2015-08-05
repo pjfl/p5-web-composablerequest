@@ -9,6 +9,7 @@ my $prereqs  = {
   'build_requires' => {
     'Module::Build' => '0.4004',
     'Test::Requires' => '0.06',
+    'Unexpected' => 'v0.38.0',
     'version' => '0.88'
   },
   'configure_requires' => {
@@ -16,8 +17,17 @@ my $prereqs  = {
     'version' => '0.88'
   },
   'requires' => {
-    'Class::Usul' => 'v0.26.0',
-    'perl' => '5.010001'
+    'Class::Inspector' => '1.28',
+    'Exporter::Tiny' => '0.042',
+    'HTTP::Body' => '1.22',
+    'HTTP::Message' => '6.06',
+    'Moo' => '2.000001',
+    'Subclass::Of' => '0.003',
+    'URI' => '1.67',
+    'Unexpected' => 'v0.38.0',
+    'namespace::autoclean' => '0.26',
+    'perl' => '5.010001',
+    'strictures' => '2.000000'
   },
   'test_requires' => {
     'File::Spec' => '0',

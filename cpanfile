@@ -1,9 +1,19 @@
-requires "Class::Usul" => "v0.26.0";
+requires "Class::Inspector" => "1.28";
+requires "Exporter::Tiny" => "0.042";
+requires "HTTP::Body" => "1.22";
+requires "HTTP::Message" => "6.06";
+requires "Moo" => "2.000001";
+requires "Subclass::Of" => "0.003";
+requires "URI" => "1.67";
+requires "Unexpected" => "v0.38.0";
+requires "namespace::autoclean" => "0.26";
 requires "perl" => "5.010001";
+requires "strictures" => "2.000000";
 
 on 'build' => sub {
   requires "Module::Build" => "0.4004";
   requires "Test::Requires" => "0.06";
+  requires "Unexpected" => "v0.38.0";
   requires "version" => "0.88";
 };
 
