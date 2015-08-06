@@ -30,7 +30,7 @@ has '_mid'          => is => 'rwp', isa => NonEmptySimpleStr | Undef;
 has '_session'      => is => 'ro',  isa => HashRef, init_arg => 'session',
    required         => TRUE;
 
-# Private methods
+# Private functions
 my $_session_attr = sub {
    my $config = shift; my @attrs = qw( authenticated messages username );
 
@@ -42,7 +42,7 @@ around 'BUILDARGS' => sub {
    my ($orig, $self, @args) = @_; my $attr = $orig->( $self, @args );
 
    for my $k ($_session_attr->( $attr->{config} )) {
-      my $v = $attr->{session}->{ $k }; defined $v and $attr->{ $k } = $v;
+       my $v = $attr->{session}->{ $k }; defined $v and $attr->{ $k } = $v;
    }
 
    $attr->{updated} //= time;
@@ -65,7 +65,7 @@ sub BUILD {
 }
 
 # Public methods
-sub clear_status_message {
+sub collect_status_message {
    my ($self, $req) = @_; my ($mid, $msg);
 
    $mid = $req->query_params->( 'mid', { optional => TRUE } )
@@ -84,12 +84,18 @@ sub status_message {
    my $mid = bson64id; $_[ 0 ]->messages->{ $mid } = $_[ 1 ]; return $mid;
 }
 
-sub update {
-   my $self = shift; my @messages = sort keys %{ $self->messages };
+sub trim_message_queue {
+   my $self = shift; my @queue = sort keys %{ $self->messages };
 
-   while (@messages > $self->_config->max_messages) {
-      my $mid = shift @messages; delete $self->messages->{ $mid };
+   while (@queue > $self->_config->max_messages) {
+      my $mid = shift @queue; delete $self->messages->{ $mid };
    }
+
+   return;
+}
+
+sub update {
+   my $self = shift; $self->trim_message_queue;
 
    for my $k ($_session_attr->( $self->_config )) {
       $self->_session->{ $k } = $self->$k();

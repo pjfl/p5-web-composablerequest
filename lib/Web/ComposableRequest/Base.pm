@@ -7,6 +7,7 @@ use HTTP::Status                      qw( HTTP_EXPECTATION_FAILED
                                           HTTP_INTERNAL_SERVER_ERROR
                                           HTTP_REQUEST_ENTITY_TOO_LARGE );
 use Scalar::Util                      qw( weaken );
+use Try::Tiny;
 use Web::ComposableRequest::Config;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS NUL TRUE );
 use Web::ComposableRequest::Util      qw( decode_array decode_hash first_char
@@ -14,8 +15,9 @@ use Web::ComposableRequest::Util      qw( decode_array decode_hash first_char
                                           request_config_roles throw );
 use Unexpected::Functions             qw( Unspecified );
 use Unexpected::Types                 qw( ArrayRef CodeRef HashRef LoadableClass
-                                          NonEmptySimpleStr Object PositiveInt
-                                          SimpleStr Str Undef );
+                                          NonEmptySimpleStr NonZeroPositiveInt
+                                          Object PositiveInt SimpleStr Str
+                                          Undef );
 use Moo::Role ();
 use Moo;
 
@@ -25,8 +27,11 @@ my $_build_body = sub {
 
    my $body = HTTP::Body->new( $self->content_type, $len );
 
-   $len and $body->add( $content );
-   decode_hash $self->config->encoding, $body->param;
+   $body->cleanup( TRUE ); $len or return $body;
+
+   try   { $self->decode_body( $body, $content ) }
+   catch { $self->log->( { level => 'error', message => $_ } ) };
+
    return $body;
 };
 
@@ -56,6 +61,9 @@ my $_build_tunnel_method = sub {
 };
 
 # Public attributes
+has 'address'        => is => 'lazy', isa => SimpleStr,
+   builder           => sub { $_[ 0 ]->_env->{ 'REMOTE_ADDR' } // NUL };
+
 has 'base'           => is => 'lazy', isa => Object,
    builder           => sub { new_uri $_[ 0 ]->_base, $_[ 0 ]->scheme },
    init_arg          => undef;
@@ -93,8 +101,14 @@ has 'path'           => is => 'lazy', isa => SimpleStr, builder => sub {
    my $v             =  $_[ 0 ]->_env->{ 'PATH_INFO' } // '/';
       $v             =~ s{ \A / }{}mx; $v =~ s{ \? .* \z }{}mx; $v };
 
+has 'port'           => is => 'lazy', isa => NonZeroPositiveInt,
+   builder           => sub { $_[ 0 ]->_env->{ 'SERVER_PORT' } // 80 };
+
 has 'query'          => is => 'lazy', isa => SimpleStr, builder => sub {
-   my $v             =  $_[ 0 ]->_env->{ 'QUERY_STRING' }; $v ? "?$v" : NUL };
+   my $v             =  $_[ 0 ]->_env->{ 'QUERY_STRING' }; $v ? "?${v}" : NUL };
+
+has 'remote_host'    => is => 'lazy', isa => SimpleStr,
+   builder           => sub { $_[ 0 ]->_env->{ 'REMOTE_HOST' } // NUL };
 
 has 'scheme'         => is => 'lazy', isa => NonEmptySimpleStr,
    builder           => sub { $_[ 0 ]->_env->{ 'psgi.url_scheme' } // 'http' };
@@ -127,10 +141,9 @@ has '_params'  => is => 'ro',   isa => HashRef,
 
 # Construction
 sub BUILD {
-   my $self = shift;
+   my $self = shift; my $enc = $self->config->encoding;
 
-   decode_array $self->config->encoding, $self->_args;
-   decode_hash  $self->config->encoding, $self->_params;
+   decode_array $enc, $self->_args; decode_hash $enc, $self->_params;
 
    return;
 }
@@ -217,6 +230,14 @@ sub body_params {
    return sub { $_get_scrubbed_param->( $self, $params, @_ ) };
 }
 
+sub decode_body {
+   my ($self, $body, $content) = @_; $body->add( $content );
+
+   decode_hash $self->config->encoding, $body->param;
+
+   return;
+}
+
 sub query_params {
    my $self = shift; weaken( $self );
 
@@ -226,7 +247,7 @@ sub query_params {
 }
 
 sub uri_for {
-   my ($self, $path, $args, @query_params) = @_;
+   my ($self, $path, $args, @query_params) = @_; $path //= NUL;
 
    $args and defined $args->[ 0 ] and $path = join '/', $path, @{ $args };
 

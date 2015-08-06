@@ -2,7 +2,7 @@ package Web::ComposableRequest::Role::Static;
 
 use namespace::autoclean;
 
-use Web::ComposableRequest::Constants qw( TRUE );
+use Web::ComposableRequest::Constants qw( NUL TRUE );
 use Web::ComposableRequest::Util      qw( first_char new_uri );
 
 use Moo::Role;
@@ -10,31 +10,27 @@ use Moo::Role;
 requires qw( locale path query_params scheme _base );
 
 around '_build__base' => sub {
-   my ($orig, $self) = @_;
+   my ($orig, $self) = @_; $self->mode eq 'static' or return $orig->( $self );
 
-   return $self->mode eq 'static'
-        ? '../' x scalar split m{ / }mx, $self->path : $orig->( $self );
+   return '../' x scalar split m{ / }mx, $self->path;
 };
 
 around '_build_uri' => sub {
-   my ($orig, $self) = @_;
+   my ($orig, $self) = @_; $self->mode eq 'static' or return $orig->( $self );
 
-   my $path = $self->mode eq 'static'
-            ? $self->locale.'/'.$self->path.'.html' : $self->path;
+   my $path = $self->_base.$self->locale.'/'.$self->path.'.html';
 
-   return new_uri $self->_base.$path, $self->scheme;
+   return new_uri $path, $self->scheme;
 };
 
 around 'uri_for' => sub {
-   my ($orig, $self, $path, $args, @query_params) = @_;
+   my ($orig, $self, $path, $args, @query_params) = @_; $path //= NUL;
+
+   ($self->mode eq 'static' and '/' ne substr $path, -1, 1)
+      or return $orig->( $self, $path, $args, @query_params );
 
    $args and defined $args->[ 0 ] and $path = join '/', $path, @{ $args };
-
-   if ($self->mode eq 'static' and '/' ne substr $path, -1, 1) {
-      $path or $path = 'index';
-      $path = $self->_base.$self->locale."/${path}.html";
-   }
-   else { first_char $path ne '/' and $path = $self->_base.$path }
+   $path or $path = 'index'; $path = $self->_base.$self->locale."/${path}.html";
 
    my $uri = new_uri $path, $self->scheme;
 

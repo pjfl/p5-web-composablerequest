@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 3 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 4 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -13,8 +13,7 @@ use Unexpected::Types                 qw( HashRef NonEmptySimpleStr
 use Moo::Role ();
 use Moo;
 
-has 'config'        => is => 'ro',   isa => HashRef | Object | Undef,
-   builder          => sub {};
+has 'config' => is => 'ro', isa => HashRef | Object | Undef, builder => sub {};
 
 has 'request_class' => is => 'lazy', isa => NonEmptySimpleStr, builder => sub {
    my $self  = shift;
