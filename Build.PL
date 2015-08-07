@@ -18,6 +18,7 @@ my $prereqs  = {
     'version' => '0.88'
   },
   'requires' => {
+    'CGI::Simple' => '1.115',
     'Class::Inspector' => '1.28',
     'Exporter::Tiny' => '0.042',
     'HTTP::Body' => '1.22',

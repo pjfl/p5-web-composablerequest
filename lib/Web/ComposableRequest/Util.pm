@@ -14,23 +14,23 @@ use URI::http;
 use URI::https;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS LANG );
 
-our @EXPORT_OK = qw( base64_decode_ns base64_encode_ns bson64id bson64id_time
-                     decode_array decode_hash deref extract_lang first_char
-                     is_arrayref is_coderef is_hashref is_member new_uri
-                     request_config_roles trim thread_id throw uri_escape );
+our @EXPORT_OK  = qw( base64_decode_ns base64_encode_ns bson64id bson64id_time
+                      decode_array decode_hash deref extract_lang first_char
+                      is_arrayref is_coderef is_hashref is_member new_uri
+                      request_config_roles trim thread_id throw uri_escape );
 
-my @config_roles = ();
-my $reserved     = q(;/?:@&=+$,[]);
-my $mark         = q(-_.!~*'());                                    #'; emacs
-my $unreserved   = "A-Za-z0-9\Q${mark}\E";
-my $uric         = quotemeta( $reserved )."${unreserved}%\#";
+my $bson_id_count  = 0;
+my $bson_prev_time = 0;
+my @config_roles   = ();
+my $reserved       = q(;/?:@&=+$,[]);
+my $mark           = q(-_.!~*'());                                   #'; emacs
+my $unreserved     = "A-Za-z0-9\Q${mark}\E";
+my $uric           = quotemeta( $reserved )."${unreserved}%\#";
 
 # Private functions
 my $_base64_char_set = sub {
    return [ 0 .. 9, 'A' .. 'Z', '_', 'a' .. 'z', '~', '+' ];
 };
-
-my $bson_id_count = 0; my $bson_prev_time = 0;
 
 my $_bsonid_inc = sub {
    my $now = shift; $bson_id_count++;

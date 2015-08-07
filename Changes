@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Added main POD
           - Added Cookie and JSON roles
           - Updated prereqs
           - Passing initial 10test_script.t

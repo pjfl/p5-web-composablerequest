@@ -1,3 +1,4 @@
+requires "CGI::Simple" => "1.115";
 requires "Class::Inspector" => "1.28";
 requires "Exporter::Tiny" => "0.042";
 requires "HTTP::Body" => "1.22";

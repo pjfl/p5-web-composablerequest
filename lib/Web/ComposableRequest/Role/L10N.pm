@@ -11,7 +11,7 @@ use Unexpected::Types                 qw( ArrayRef CodeRef NonEmptySimpleStr
                                           Undef );
 use Moo::Role;
 
-requires qw( config query_params _env );
+requires qw( query_params _config _env );
 
 request_config_roles __PACKAGE__.'::Config';
 
@@ -20,13 +20,13 @@ my $_build_locale = sub {
    my $self   = shift;
    my $locale = $self->query_params->( 'locale', { optional => TRUE } );
 
-   $locale and is_member $locale, $self->config->locales and return $locale;
+   $locale and is_member $locale, $self->_config->locales and return $locale;
 
    for (@{ $self->locales }) {
-      is_member $_, $self->config->locales and return $_;
+      is_member $_, $self->_config->locales and return $_;
    }
 
-   return $self->config->locale;
+   return $self->_config->locale;
 };
 
 my $_build_locales = sub {
@@ -40,7 +40,7 @@ my $_build_locales = sub {
 };
 
 my $_build__localise = sub {
-   my $self = shift; my $gettext = $self->config->gettext;
+   my $self = shift; my $gettext = $self->_config->gettext;
 
    return sub {
       my ($key, $args) = @_;
@@ -93,11 +93,11 @@ my $_localise_args = sub {
             : { params => (is_arrayref $_[ 0 ]) ? $_[ 0 ] : [ @_ ] };
 
    not exists $args->{domains}
-      and $args->{domains} = [ $self->config->l10n_domain ]
+      and $args->{domains} = [ $self->_config->l10n_domain ]
       and $self->domain
       and $args->{domains}->[ 1 ] = $self->domain;
 
-   $args->{no_quote_bind_values} //= not $self->config->quote_bind_values;
+   $args->{no_quote_bind_values} //= not $self->_config->quote_bind_values;
 
    return $args;
 };
@@ -114,7 +114,7 @@ sub loc {
 sub loc_default {
    my ($self, $key, @args) = @_; my $args = $_localise_args->( $self, @args );
 
-   $args->{locale} = $self->config->locale;
+   $args->{locale} = $self->_config->locale;
 
    return $self->_localise->( $key, $args );
 }

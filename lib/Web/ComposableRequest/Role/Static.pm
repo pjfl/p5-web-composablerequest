@@ -4,7 +4,6 @@ use namespace::autoclean;
 
 use Web::ComposableRequest::Constants qw( NUL TRUE );
 use Web::ComposableRequest::Util      qw( first_char new_uri );
-
 use Moo::Role;
 
 requires qw( locale path query_params scheme _base );

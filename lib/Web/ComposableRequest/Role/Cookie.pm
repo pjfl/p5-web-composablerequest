@@ -7,7 +7,7 @@ use Unexpected::Types            qw( HashRef );
 use Web::ComposableRequest::Util qw( request_config_roles );
 use Moo::Role;
 
-requires qw( config _env );
+requires qw( _config _env );
 
 request_config_roles __PACKAGE__.'::Config';
 
@@ -24,11 +24,11 @@ my $_decode = sub {
 };
 
 has 'cookies' => is => 'lazy', isa => HashRef, builder => sub {
-   my %h = CGI::Simple::Cookie->parse( $_[ 0 ]->_env->{ 'HTTP_COOKIE' } ); \%h;
+   my %v = CGI::Simple::Cookie->parse( $_[ 0 ]->_env->{ 'HTTP_COOKIE' } ); \%v;
 };
 
 sub get_cookie_hash {
-   return $_decode->( $_[ 0 ]->cookies, $_[ 0 ]->config->prefix, $_[ 1 ] );
+   return $_decode->( $_[ 0 ]->cookies, $_[ 0 ]->_config->prefix, $_[ 1 ] );
 };
 
 package Web::ComposableRequest::Role::Cookie::Config;

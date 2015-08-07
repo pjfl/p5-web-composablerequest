@@ -8,7 +8,7 @@ use Web::ComposableRequest::Constants qw( FALSE );
 use Unexpected::Types                 qw( Object );
 use Moo::Role;
 
-requires qw( config content_type );
+requires qw( content_type _config );
 
 has '_json' => is => 'lazy', isa => Object,
    builder  => sub { JSON::MaybeXS->new( utf8 => FALSE ) };
@@ -20,7 +20,7 @@ around 'decode_body' => sub {
       or return $orig->( $self, $body, $content );
 
    $body->{param} = $self->_json->decode
-      ( decode( $self->config->encoding, $content ) );
+      ( decode( $self->_config->encoding, $content ) );
 
    return;
 };

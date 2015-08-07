@@ -27,11 +27,11 @@ my $env     = { CONTENT_LENGTH  => 20,
               };
 my $req     = $factory->new_from_simple_request( {}, $args, $query, $env );
 
-is $req->config->encoding, 'UTF-8', 'Default encoding';
-is $req->config->max_asset_size, 4_194_304, 'Default max asset size';
-is $req->config->scrubber, '[^0-9A-Za-z]', 'Non default scrubber';
-is $req->config->l10n_domain, 'messages', 'Config attribute from role';
-is $req->config->max_sess_time, 3_600, 'Config attribute from another role';
+is $req->_config->encoding, 'UTF-8', 'Default encoding';
+is $req->_config->max_asset_size, 4_194_304, 'Default max asset size';
+is $req->_config->scrubber, '[^0-9A-Za-z]', 'Non default scrubber';
+is $req->_config->l10n_domain, 'messages', 'Config attribute from role';
+is $req->_config->max_sess_time, 3_600, 'Config attribute from another role';
 is $req->uri, 'http://localhost:5000/Getting-Started', 'Builds URI';
 is $req->query_params->( 'mid' ), 1234, 'Query params scrubs unwanted chars';
 is $req->query_params->( 'mid', { raw => 1 } ), '123_4', 'Query params raw val';

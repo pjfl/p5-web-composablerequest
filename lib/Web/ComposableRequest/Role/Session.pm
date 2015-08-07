@@ -8,7 +8,7 @@ use Web::ComposableRequest::Util qw( request_config_roles );
 use Unexpected::Types            qw( LoadableClass Object );
 use Moo::Role;
 
-requires qw( config loc loc_default log query_params _env );
+requires qw( loc loc_default log query_params _config _env );
 
 request_config_roles __PACKAGE__.'::Config';
 
@@ -16,8 +16,8 @@ my $class_stash = {};
 
 my $_build_session_class = sub {
    my $self         = shift;
-   my $base         = $self->config->session_class;
-   my $session_attr = $self->config->session_attr;
+   my $base         = $self->_config->session_class;
+   my $session_attr = $self->_config->session_attr;
    my @session_attr = keys %{ $session_attr };
 
    @session_attr > 0 or return $base;
@@ -42,7 +42,7 @@ my $_build_session_class = sub {
 
 has 'session'       => is => 'lazy', isa => Object, builder => sub {
    return $_[ 0 ]->session_class->new
-      ( config      => $_[ 0 ]->config,
+      ( config      => $_[ 0 ]->_config,
         log         => $_[ 0 ]->log,
         session     => $_[ 0 ]->_env->{ 'psgix.session' }, ) },
    handles          => [ 'authenticated', 'username' ];

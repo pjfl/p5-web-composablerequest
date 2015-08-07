@@ -8,17 +8,14 @@ use HTTP::Status                      qw( HTTP_EXPECTATION_FAILED
                                           HTTP_REQUEST_ENTITY_TOO_LARGE );
 use Scalar::Util                      qw( weaken );
 use Try::Tiny;
-use Web::ComposableRequest::Config;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS NUL TRUE );
 use Web::ComposableRequest::Util      qw( decode_array decode_hash first_char
-                                          is_arrayref new_uri
-                                          request_config_roles throw );
+                                          is_arrayref new_uri throw );
 use Unexpected::Functions             qw( Unspecified );
 use Unexpected::Types                 qw( ArrayRef CodeRef HashRef LoadableClass
                                           NonEmptySimpleStr NonZeroPositiveInt
                                           Object PositiveInt SimpleStr Str
                                           Undef );
-use Moo::Role ();
 use Moo;
 
 # Attribute constructors
@@ -33,13 +30,6 @@ my $_build_body = sub {
    catch { $self->log->( { level => 'error', message => $_ } ) };
 
    return $body;
-};
-
-my $_build_config_class = sub {
-   my $base  = 'Web::ComposableRequest::Config';
-   my @roles = request_config_roles; @roles > 0 or return $base;
-
-   return Moo::Role->create_class_with_roles( $base, @roles );
 };
 
 my $_build__content = sub {
@@ -69,15 +59,6 @@ has 'base'           => is => 'lazy', isa => Object,
    init_arg          => undef;
 
 has 'body'           => is => 'lazy', isa => Object, builder => $_build_body;
-
-has 'config'         => is => 'lazy', isa => Object, builder => sub {
-   $_[ 0 ]->config_class->new( $_[ 0 ]->config_attr ) }, init_arg => undef;
-
-has 'config_attr'    => is => 'ro',   isa => HashRef | Object | Undef,
-   init_arg          => 'config';
-
-has 'config_class'   => is => 'lazy', isa => NonEmptySimpleStr,
-   builder           => $_build_config_class;
 
 has 'content_length' => is => 'lazy', isa => PositiveInt,
    builder           => sub { $_[ 0 ]->_env->{ 'CONTENT_LENGTH' } // 0 };
@@ -130,6 +111,9 @@ has '_args'    => is => 'ro',   isa => ArrayRef,
 has '_base'    => is => 'lazy', isa => NonEmptySimpleStr, builder => sub {
    $_[ 0 ]->scheme.'://'.$_[ 0 ]->hostport.$_[ 0 ]->script.'/' };
 
+has '_config'  => is => 'ro',   isa => Object,
+   required    => TRUE, init_arg => 'config';
+
 has '_content' => is => 'lazy', isa => Str,
    builder     => $_build__content;
 
@@ -141,7 +125,7 @@ has '_params'  => is => 'ro',   isa => HashRef,
 
 # Construction
 sub BUILD {
-   my $self = shift; my $enc = $self->config->encoding;
+   my $self = shift; my $enc = $self->_config->encoding;
 
    decode_array $enc, $self->_args; decode_hash $enc, $self->_params;
 
@@ -210,8 +194,8 @@ my $_scrub_value = sub {
 my $_get_scrubbed_param = sub {
    my ($self, $params, $name, $opts) = @_; $opts = { %{ $opts // {} } };
 
-   $opts->{max_length} //= $self->config->max_asset_size;
-   $opts->{scrubber  } //= $self->config->scrubber;
+   $opts->{max_length} //= $self->_config->max_asset_size;
+   $opts->{scrubber  } //= $self->_config->scrubber;
    $opts->{multiple  } and return
       [ map { $opts->{raw} ? $_ : $_scrub_value->( $name, $_, $opts ) }
            @{ $_get_defined_values->( $params, $name, $opts ) } ];
@@ -233,7 +217,7 @@ sub body_params {
 sub decode_body {
    my ($self, $body, $content) = @_; $body->add( $content );
 
-   decode_hash $self->config->encoding, $body->param;
+   decode_hash $self->_config->encoding, $body->param;
 
    return;
 }
