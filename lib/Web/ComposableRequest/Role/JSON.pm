@@ -8,12 +8,12 @@ use Web::ComposableRequest::Constants qw( FALSE );
 use Unexpected::Types                 qw( Object );
 use Moo::Role;
 
-requires qw( content_type _config );
+requires qw( content_type _config _decode_body );
 
 has '_json' => is => 'lazy', isa => Object,
    builder  => sub { JSON::MaybeXS->new( utf8 => FALSE ) };
 
-around 'decode_body' => sub {
+around '_decode_body' => sub {
    my ($orig, $self, $body, $content) = @_;
 
    $self->content_type eq 'application/json'
@@ -35,32 +35,42 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Role::JSON - One-line description of the modules purpose
+Web::ComposableRequest::Role::JSON - Decodes JSON request bodies
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Role::JSON;
-   # Brief but working code examples
+   package Your::Request::Class;
+
+   use Moo;
+
+   extends 'Web::ComposableRequest::Base';
+   with    'Web::ComposableRequest::Role::JSON';
 
 =head1 Description
 
+Decodes JSON request bodies
+
 =head1 Configuration and Environment
 
-Defines the following attributes;
-
-=over 3
-
-=back
+Defines no public attributes
 
 =head1 Subroutines/Methods
 
+=head2 C<decode_body>
+
+Decodes the body as JSON if the content type is C<application/json>
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Encode>
+
+=item L<JSON::MaybeXS>
 
 =back
 

@@ -26,14 +26,14 @@ my $_build_body = sub {
 
    $body->cleanup( TRUE ); $len or return $body;
 
-   try   { $self->decode_body( $body, $content ) }
-   catch { $self->log->( { level => 'error', message => $_ } ) };
+   try   { $self->_decode_body( $body, $content ) }
+   catch { $self->_log->( { level => 'error', message => $_ } ) };
 
    return $body;
 };
 
 my $_build__content = sub {
-   my $self = shift; my $env = $self->_env; my $log = $self->log; my $content;
+   my $self = shift; my $env = $self->_env; my $log = $self->_log; my $content;
 
    my $cl = $self->content_length  or return NUL;
    my $fh = $env->{ 'psgi.input' } or return NUL;
@@ -71,9 +71,6 @@ has 'host'           => is => 'lazy', isa => NonEmptySimpleStr,
 
 has 'hostport'       => is => 'lazy', isa => NonEmptySimpleStr,
    builder           => sub { $_[ 0 ]->_env->{ 'HTTP_HOST' } // 'localhost' };
-
-has 'log'            => is => 'lazy', isa => CodeRef,
-   builder           => sub { $_[ 0 ]->_env->{ 'psgix.logger' } // sub {} };
 
 has 'method'         => is => 'lazy', isa => SimpleStr,
    builder           => sub { lc( $_[ 0 ]->_env->{ 'REQUEST_METHOD' } // NUL )};
@@ -119,6 +116,10 @@ has '_content' => is => 'lazy', isa => Str,
 
 has '_env'     => is => 'ro',   isa => HashRef,
    builder     => sub { {} }, init_arg => 'env';
+
+has '_log'     => is => 'lazy', isa => CodeRef,
+   builder     => sub { $_[ 0 ]->_env->{ 'psgix.logger' } // sub {} },
+   init_arg    => 'log';
 
 has '_params'  => is => 'ro',   isa => HashRef,
    builder     => sub { {} }, init_arg => 'params';
@@ -205,6 +206,15 @@ my $_get_scrubbed_param = sub {
    return $opts->{raw} ? $v : $_scrub_value->( $name, $v, $opts );
 };
 
+# Private methods
+sub _decode_body {
+   my ($self, $body, $content) = @_; $body->add( $content );
+
+   decode_hash $self->_config->encoding, $body->param;
+
+   return;
+}
+
 # Public methods
 sub body_params {
    my $self = shift; weaken( $self );
@@ -212,14 +222,6 @@ sub body_params {
    my $params = $self->body->param; weaken( $params );
 
    return sub { $_get_scrubbed_param->( $self, $params, @_ ) };
-}
-
-sub decode_body {
-   my ($self, $body, $content) = @_; $body->add( $content );
-
-   decode_hash $self->_config->encoding, $body->param;
-
-   return;
 }
 
 sub query_params {
@@ -262,14 +264,36 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Base - One-line description of the modules purpose
+Web::ComposableRequest::Base - Request class core attributes and methods
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Base;
-   # Brief but working code examples
+   package Web::ComposableRequest;
+
+   use Web::ComposableRequest::Util qw( deref );
+   use Unexpected::Types            qw( NonEmptySimpleStr );
+
+   my $_build_request_class = sub {
+      my $self  = shift;
+      my $base  = __PACKAGE__.'::Base';
+      my $conf  = $self->config_attr or return $base;
+      my $class = deref( $conf, 'request_class' ) // $base;
+      my @roles = @{ deref( $conf, 'request_roles' ) // [] };
+
+      @roles > 0 or return $class;
+
+      @roles = map { (substr $_, 0, 1 eq '+')
+                   ?  substr $_, 1 : __PACKAGE__."::Role::${_}" } @roles;
+
+      return Moo::Role->create_class_with_roles( $class, @roles );
+   };
+
+   has 'request_class' => is => 'lazy', isa => NonEmptySimpleStr,
+      builder          => $_build_request_class;
 
 =head1 Description
+
+Request class core attributes and methods
 
 =head1 Configuration and Environment
 
@@ -277,17 +301,153 @@ Defines the following attributes;
 
 =over 3
 
+=item C<address>
+
+A simple string the C<REMOTE_ADDR> attribute from the Plack environment
+
+=item C<base>
+
+A L<URI> object reference that points to the application base
+
+=item C<body>
+
+An L<HTTP::Body> object constructed from the current request
+
+=item C<content_length>
+
+Length in bytes of the not yet decoded body content
+
+=item C<content_type>
+
+Mime type of the body content
+
+=item C<host>
+
+A non empty simple string which is the hostname in the request. The value of
+L</hostport> but without the port number
+
+=item C<hostport>
+
+The hostname and port number in the request
+
+=item C<method>
+
+The HTTP request method. Lower cased
+
+=item C<path>
+
+Taken from the request path, this should be the same as the
+C<mount_point> configuration attribute
+
+=item C<port>
+
+A non zero positive integer that default to 80. The default server port
+
+=item C<query>
+
+The query parameters from the current request. A simple string beginning with
+C<?>
+
+=item C<remote_host>
+
+The C<REMOTE_HOST> attribute from the Plack environment
+
+=item C<scheme>
+
+The HTTP protocol used in the request. Defaults to C<http>
+
+=item C<script>
+
+The request path
+
+=item C<tunnel_method>
+
+The C<_method> attribute from the body of a post or from the query parameters
+in the event of a get request
+
+=item C<uri>
+
+The URI of the current request. Does not include the query parameters
+
+=item C<_args>
+
+An array reference of the arguments supplied with the URI
+
+=item C<_base>
+
+A non empty simple string which is the base of the requested URI
+
+=item C<_config>
+
+The configuration object reference. Required
+
+=item C<_content>
+
+A decoded string of characters representing the body of the request
+
+=item C<_env>
+
+A hash reference, the L<Plack> request environment
+
+=item C<_log>
+
+The logger code reference. Defaults to the one supplied by the Plack
+environment
+
+=item C<_params>
+
+A hash reference of query parameters supplied with the request URI
+
 =back
 
 =head1 Subroutines/Methods
 
+=head2 C<BUILD>
+
+Decodes the URI and query parameters
+
+=head2 C<body_params>
+
+   $code_ref = $self->body_params; $value = $code_ref->( 'key' );
+
+Returns a code reference which when called with a body parameter name returns
+the body parameter value after first scrubbing it of "dodgy" characters. Throws
+if the value is undefined or tainted
+
+=head2 C<query_params>
+
+   $code_ref = $self->query_params; $value = $code_ref->( 'key' );
+
+Returns a code reference which when called with a query parameter name returns
+the query parameter value after first scrubbing it of "dodgy" characters. Throws
+if the value is undefined or tainted
+
+=head2 C<uri_for>
+
+   $uri_obj = $self->uri_for( $partial_uri_path, $args, $query_params );
+
+Prefixes C<$partial_uri_path> with the base of the current request. Returns
+an absolute URI
+
+=head2 C<uri_params>
+
+   $code_ref = $self->uri_params; $value = $code_ref->( $index );
+
+Returns a code reference which when called with an integer index returns
+the uri parameter value after first scrubbing it of "dodgy" characters. Throws
+if the value is undefined or tainted
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<HTTP::Body>
+
+=item L<HTTP::Status>
 
 =back
 

@@ -47,14 +47,33 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Config - One-line description of the modules purpose
+Web::ComposableRequest::Config - Base class for the request configuration
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Config;
-   # Brief but working code examples
+   package Web::ComposableRequest;
+
+   use Moo;
+
+   my $_build_config_class = sub {
+      my $base  = __PACKAGE__.'::Config';
+      my @roles = request_config_roles; @roles > 0 or return $base;
+
+      return Moo::Role->create_class_with_roles( $base, @roles );
+   };
+
+   has 'config'        => is => 'lazy', isa => Object, builder => sub {
+      $_[ 0 ]->config_class->new( $_[ 0 ]->config_attr ) }, init_arg => undef;
+
+   has 'config_attr'   => is => 'ro',   isa => HashRef | Object | Undef,
+      builder          => sub {},  init_arg => 'config';
+
+   has 'config_class'  => is => 'lazy', isa => NonEmptySimpleStr,
+      builder          => $_build_config_class;
 
 =head1 Description
+
+Base class for the request configuration
 
 =head1 Configuration and Environment
 
@@ -62,17 +81,38 @@ Defines the following attributes;
 
 =over 3
 
+=item C<encoding>
+
+The encoding used to decode all inputs, defaults to C<UTF-8>
+
+=item C<max_asset_size>
+
+Integer defaults to 4Mb. Maximum size in bytes of the file upload
+
+=item C<scrubber>
+
+A string used as a character class in a regular expression. These character
+are scrubber from user input so they cannot appear in any user supplied
+pathnames or query terms. Defaults to C<[;\$\`&\r\n]>
+
 =back
 
 =head1 Subroutines/Methods
 
+=head2 C<BUILDARGS>
+
+Lists the attributes of the composed class and initialises their
+values from supplied configuration
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Class::Inspector>
 
 =back
 

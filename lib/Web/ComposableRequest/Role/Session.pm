@@ -8,7 +8,7 @@ use Web::ComposableRequest::Util qw( request_config_roles );
 use Unexpected::Types            qw( LoadableClass Object );
 use Moo::Role;
 
-requires qw( loc loc_default log query_params _config _env );
+requires qw( loc loc_default query_params _config _env _log );
 
 request_config_roles __PACKAGE__.'::Config';
 
@@ -43,7 +43,7 @@ my $_build_session_class = sub {
 has 'session'       => is => 'lazy', isa => Object, builder => sub {
    return $_[ 0 ]->session_class->new
       ( config      => $_[ 0 ]->_config,
-        log         => $_[ 0 ]->log,
+        log         => $_[ 0 ]->_log,
         session     => $_[ 0 ]->_env->{ 'psgix.session' }, ) },
    handles          => [ 'authenticated', 'username' ];
 
@@ -78,14 +78,22 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Role::Session - One-line description of the modules purpose
+Web::ComposableRequest::Role::Session - Adds a session object to the request
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Role::Session;
-   # Brief but working code examples
+   package Your::Request::Class;
+
+   use Moo;
+
+   extends 'Web::ComposableRequest::Base';
+   with    'Web::ComposableRequest::Role::Session';
 
 =head1 Description
+
+Adds a session object to the request. The L</session_attr> list defines
+attributes (name, type, and default) which are dynamically added to the
+session class
 
 =head1 Configuration and Environment
 
@@ -93,17 +101,59 @@ Defines the following attributes;
 
 =over 3
 
+=item C<session>
+
+Stores the user preferences. An instance of L</session_class>
+
+=item C<session_class>
+
+Defaults to L<Web::ComposableRequest::Session>
+
+=back
+
+Defines the following configuration attributes
+
+=over 3
+
+=item C<max_messages>
+
+A non zero positive integer which defaults to 3. The maximum number of messages
+to keep in the queue
+
+=item C<max_sess_time>
+
+A positive integer that defaults to 3600 seconds (one hour). The maximum amount
+of time a session can be idle before re-authentication is required. Setting
+this to zero disables the feature
+
+=item C<session_attr>
+
+A hash reference of array references. Defaults to an empty hash. The keys
+are the session attribute names, the arrays are tuples containing a type
+and a default value
+
+=item C<session_class>
+
+A non empty simple string which defaults to L<Web::ComposableRequest::Session>.
+The name of the session base class
+
 =back
 
 =head1 Subroutines/Methods
 
+Defines no methods
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Digest::MD5>
+
+=item L<Subclass::Of>
 
 =back
 

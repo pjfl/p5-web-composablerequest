@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 5 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 6 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -14,6 +14,11 @@ use Unexpected::Types                 qw( HashRef NonEmptySimpleStr
                                           Object Undef );
 use Moo::Role ();
 use Moo;
+
+# Attribute constructors
+my $_build_config = sub {
+   return $_[ 0 ]->config_class->new( $_[ 0 ]->config_attr );
+};
 
 my $_build_config_class = sub {
    my $base  = __PACKAGE__.'::Config';
@@ -37,8 +42,9 @@ my $_build_request_class = sub {
    return Moo::Role->create_class_with_roles( $class, @roles );
 };
 
-has 'config'        => is => 'lazy', isa => Object, builder => sub {
-   $_[ 0 ]->config_class->new( $_[ 0 ]->config_attr ) }, init_arg => undef;
+# Public attributes
+has 'config'        => is => 'lazy', isa => Object,
+   builder          => $_build_config, init_arg => undef;
 
 has 'config_attr'   => is => 'ro',   isa => HashRef | Object | Undef,
    builder          => sub {},  init_arg => 'config';
@@ -49,16 +55,17 @@ has 'config_class'  => is => 'lazy', isa => NonEmptySimpleStr,
 has 'request_class' => is => 'lazy', isa => NonEmptySimpleStr,
    builder          => $_build_request_class;
 
+# Public methods
 sub new_from_simple_request {
    my ($self, $opts, @args) = @_; my $attr = { %{ $opts // {} } };
 
    my $request_class = $self->request_class; # Trigger role application
 
-   $attr->{config} = $self->config; # Composed after request_class
+   $attr->{config} = $self->config;          # Composed after request_class
    $attr->{env   } = (is_hashref $args[ -1 ]) ? pop @args : {};
    $attr->{params} = (is_hashref $args[ -1 ]) ? pop @args : {};
    $attr->{args  } = (defined $args[ 0 ] && blessed $args[ 0 ])
-                   ? [ $args[ 0 ] ] # Upload object
+                   ? [ $args[ 0 ] ]          # Upload object
                    : [ split m{ / }mx, trim $args[ 0 ] || NUL ];
 
    return $request_class->new( $attr );

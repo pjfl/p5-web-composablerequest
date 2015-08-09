@@ -35,14 +35,15 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Constants - One-line description of the modules purpose
+Web::ComposableRequest::Constants - Functions that return constant values
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Constants;
-   # Brief but working code examples
+   use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS );
 
 =head1 Description
+
+Functions that return constant values
 
 =head1 Configuration and Environment
 
@@ -50,17 +51,44 @@ Defines the following attributes;
 
 =over 3
 
+=item C<Exception_Class>
+
+The name of the class used to throw exceptions. Defaults to
+L<Web::ComposableRequest::Exception>
+
 =back
 
 =head1 Subroutines/Methods
 
+=head2 C<EXCEPTION_CLASS>
+
+The value of the L</Exception_Class> attribute
+
+=head2 C<FALSE>
+
+The digit zero
+
+=head2 C<LANG>
+
+The default language C<en>
+
+=head2 C<NUL>
+
+The null (zero length) string
+
+=head2 C<TRUE>
+
+The digit one
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Exporter::Tiny>
 
 =back
 

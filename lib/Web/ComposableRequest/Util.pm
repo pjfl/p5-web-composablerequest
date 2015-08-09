@@ -22,6 +22,7 @@ our @EXPORT_OK  = qw( base64_decode_ns base64_encode_ns bson64id bson64id_time
 my $bson_id_count  = 0;
 my $bson_prev_time = 0;
 my @config_roles   = ();
+my $host_id        = substr md5( hostname ), 0, 3;
 my $reserved       = q(;/?:@&=+$,[]);
 my $mark           = q(-_.!~*'());                                   #'; emacs
 my $unreserved     = "A-Za-z0-9\Q${mark}\E";
@@ -66,12 +67,10 @@ my $_index64 = sub {
                XX XX XX XX  XX XX XX XX  XX XX XX XX  XX XX XX XX) ];
 };
 
-my $_bsonid = sub {
-   my $now  = time;
-   my $host = substr md5( hostname ), 0, 3;
-   my $pid  = pack 'n', $PID % 0xFFFF;
+my $_bson_id = sub {
+   my $now = time; my $pid = pack 'n', $PID % 0xFFFF;
 
-   return $_bsonid_time->( $now ).$host.$pid.$_bsonid_inc->( $now );
+   return $_bsonid_time->( $now ).$host_id.$pid.$_bsonid_inc->( $now );
 };
 
 # Exported functions
@@ -141,7 +140,7 @@ sub base64_encode_ns (;$) {
 }
 
 sub bson64id (;$) {
-   return base64_encode_ns( $_bsonid->() );
+   return base64_encode_ns( $_bson_id->() );
 }
 
 sub bson64id_time ($) {
@@ -252,32 +251,166 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Util - One-line description of the modules purpose
+Web::ComposableRequest::Util - Functions used in this distribution
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Util;
-   # Brief but working code examples
+   use Web::ComposableRequest::Util qw( first_char );
 
 =head1 Description
 
+Functions used in this distribution
+
 =head1 Configuration and Environment
 
-Defines the following attributes;
-
-=over 3
-
-=back
+Defines no attributes
 
 =head1 Subroutines/Methods
 
+=head2 C<base64_decode_ns>
+
+   $decoded_value = base64_decode_ns $encoded_value;
+
+Decode a scalar value encode using L</base64_encode_ns>
+
+=head2 C<base64_encode_ns>
+
+   $encoded_value = base64_encode_ns $encoded_value;
+
+Base 64 encode a scalar value using an output character set that preserves
+the input values sort order (natural sort)
+
+=head2 C<bson64id>
+
+   $base64_encoded_extended_bson64_id = bson64id;
+
+Generate a new C<BSON> id. Returns a 20 character string that is reasonably
+unique across hosts and are in ascending order. Use this to create unique ids
+for data streams like message queues and file feeds
+
+=head2 C<bson64id_time>
+
+   $seconds_elapsed_since_the_epoch = bson64id_time $bson64_id;
+
+Returns the time the L</bson64id> id was generated as Unix time
+
+=head2 C<decode_array>
+
+   decode_array $encoding, $array_ref;
+
+Applies L<Encode/decode> to each element in the supplied list
+
+=head2 C<decode_hash>
+
+   decode_hash $encoding, $hash_ref;
+
+Applies L<Encode/decode> to both the keys and values of the supplied hash
+
+=head2 C<deref>
+
+   $value = deref $reftype, $key;
+
+The C<$reftype> can be either an object reference or a hash reference. Returns
+the value for the corresponding key
+
+=head2 C<extract_lang>
+
+   $language_code = extract_lang $locale;
+
+Returns the first part of the supplied locale which is the language code, e.g.
+C<en_GB> returns C<en>
+
+=head2 C<first_char>
+
+   $single_char = first_char $some_string;
+
+Returns the first character of C<$string>
+
+=head2 C<is_arrayref>
+
+   $bool = is_arrayref $scalar_variable
+
+Tests to see if the scalar variable is an array ref
+
+=head2 C<is_coderef>
+
+   $bool = is_coderef $scalar_variable
+
+Tests to see if the scalar variable is a code ref
+
+=head2 C<is_hashref>
+
+   $bool = is_hashref $scalar_variable
+
+Tests to see if the scalar variable is a hash ref
+
+=head2 C<is_member>
+
+   $bool = is_member 'test_value', qw( a_value test_value b_value );
+
+Tests to see if the first parameter is present in the list of
+remaining parameters
+
+=head2 C<new_uri>
+
+   $uri_object_ref = new_uri $uri_path, $scheme;
+
+Return a new L</URI> object reference
+
+=head2 C<request_config_roles>
+
+   @list_of_role_names = request_config_roles $request_role_name;
+
+If supplied the role name is pushed onto a class attribute list. When called
+without a role name the list of role names stored in the class attribute are
+returned
+
+=head2 C<thread_id>
+
+   $tid = thread_id;
+
+Returns the id of this thread. Returns zero if threads are not loaded
+
+=head2 C<throw>
+
+   throw error => 'error_key', args => [ 'error_arg' ];
+
+Expose L<Web::ComposableRequest::Exception/throw>.
+L<Web::ComposableRequest::Usul::Constants> has a class attribute
+I<Exception_Class> which can be set change the class of the thrown exception
+
+=head2 C<trim>
+
+   $trimmed_string = trim $string_with_leading_and_trailing_whitespace;
+
+Remove leading and trailing whitespace including trailing newlines. Takes
+an additional string used as the character class to remove. Defaults to
+space and tab
+
+=head2 C<uric_escape>
+
+   $value_ref = uric_escape $value, $pattern;
+
+Uses L<URI::Escape/escape_char> to escape any characters in C<$value> that
+match the optional pattern. Returns a reference to the escaped value
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Digest::MD5>
+
+=item L<Encode>
+
+=item L<URI::Escape>
+
+=item L<URI::http>
+
+=item L<URI::https>
 
 =back
 

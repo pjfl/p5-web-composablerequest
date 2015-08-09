@@ -12,11 +12,11 @@ requires qw( _config _env );
 request_config_roles __PACKAGE__.'::Config';
 
 my $_decode = sub {
-   my ($cookies, $prefix, $attr_name) = @_; my $name = "${prefix}_${attr_name}";
+   my ($cookies, $prefix, $name) = @_; my $cname = "${prefix}_${name}";
 
-   my $attr = {}; ($attr_name and exists $cookies->{ $name }) or return $attr;
+   my $attr = {}; ($name and exists $cookies->{ $cname }) or return $attr;
 
-   for (split m{ \+ }mx, $cookies->{ $name }->value) {
+   for (split m{ \+ }mx, $cookies->{ $cname }->value) {
       my ($k, $v) = split m{ ~ }mx, $_; $k and $attr->{ $k } = $v;
    }
 
@@ -51,14 +51,20 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Role::Cookie - One-line description of the modules purpose
+Web::ComposableRequest::Role::Cookie - Adds cookies to the request class
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Role::Cookie;
-   # Brief but working code examples
+   package Your::Request::Class;
+
+   use Moo;
+
+   extends 'Web::ComposableRequest::Base';
+   with    'Web::ComposableRequest::Role::Cookie';
 
 =head1 Description
+
+Adds cookies to the request class
 
 =head1 Configuration and Environment
 
@@ -66,17 +72,43 @@ Defines the following attributes;
 
 =over 3
 
+=item C<cookies>
+
+A hash reference of cookies supplied with the request
+
+=back
+
+Defines the following configuration attributes
+
+=over 3
+
+=item C<prefix>
+
+A required non empty simple string. Prepended to the cookie name
+
 =back
 
 =head1 Subroutines/Methods
 
+=head2 C<get_cookie_hash>
+
+   my $hash_ref = $req->get_cookie_hash( $cookie_name );
+
+The configuration prefix is prepended to the cookie name. That key is used
+lookup a cookie in the L</cookies> hash. That cookie is decoded to produce
+the hash reference returned by this method. The encoding separates pairs
+with the C<+> character and separates keys and values with the C<~>
+character
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<CGI::Simple::Cookie>
 
 =back
 

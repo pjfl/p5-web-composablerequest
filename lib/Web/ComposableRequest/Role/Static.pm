@@ -52,32 +52,42 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Role::Static - One-line description of the modules purpose
+Web::ComposableRequest::Role::Static - Generate static web site URIs
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Role::Static;
-   # Brief but working code examples
+   package Your::Request::Class;
+
+   use Moo;
+
+   extends 'Web::ComposableRequest::Base';
+   with    'Web::ComposableRequest::Role::Static';
 
 =head1 Description
 
+Causes the L<uri_for|Web::ComposableRequest::Base/uri_for> method to return
+static URIs
+
 =head1 Configuration and Environment
 
-Defines the following attributes;
-
-=over 3
-
-=back
+Defines no attributes
 
 =head1 Subroutines/Methods
 
+=head2 C<mode>
+
+The mode of the current request. Set to C<online> if this is a live request,
+set to C<static> of this request is generating a static page
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Moo::Role>
 
 =back
 

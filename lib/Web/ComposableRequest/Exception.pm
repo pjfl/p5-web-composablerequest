@@ -30,14 +30,15 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Exception - One-line description of the modules purpose
+Web::ComposableRequest::Exception - Defines the exception class thrown by this distribution
 
 =head1 Synopsis
 
    use Web::ComposableRequest::Exception;
-   # Brief but working code examples
 
 =head1 Description
+
+Defines the exception class thrown by this distribution
 
 =head1 Configuration and Environment
 
@@ -45,17 +46,35 @@ Defines the following attributes;
 
 =over 3
 
+=item C<rv>
+
+An integer which defaults to one. The exception return value
+
 =back
 
 =head1 Subroutines/Methods
 
+=head2 C<BUILDARGS>
+
+Differentiate the constructor method signatures
+
+=head2 C<as_string>
+
+Stringifies the exception error message
+
+=head2 C<clone>
+
+Clones the invocant
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Unexpected>
 
 =back
 

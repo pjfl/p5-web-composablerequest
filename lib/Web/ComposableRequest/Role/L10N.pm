@@ -2,6 +2,7 @@ package Web::ComposableRequest::Role::L10N;
 
 use namespace::autoclean;
 
+use Scalar::Util                      qw( weaken );
 use Web::ComposableRequest::Constants qw( NUL TRUE );
 use Web::ComposableRequest::Util      qw( extract_lang is_arrayref
                                           is_hashref is_member
@@ -40,7 +41,7 @@ my $_build_locales = sub {
 };
 
 my $_build__localise = sub {
-   my $self = shift; my $gettext = $self->_config->gettext;
+   my $self = shift; my $gettext = $self->_config->gettext; weaken( $gettext );
 
    return sub {
       my ($key, $args) = @_;
@@ -153,14 +154,20 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Role::L10N - One-line description of the modules purpose
+Web::ComposableRequest::Role::L10N - Provide localisation methods
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Role::L10N;
-   # Brief but working code examples
+   package Your::Request::Class;
+
+   use Moo;
+
+   extends 'Web::ComposableRequest::Base';
+   with    'Web::ComposableRequest::Role::L10N';
 
 =head1 Description
+
+Provide localisation methods
 
 =head1 Configuration and Environment
 
@@ -168,17 +175,74 @@ Defines the following attributes;
 
 =over 3
 
+=item C<domain>
+
+The domain to which this request belongs. Can be used to select assets like
+translation files
+
+=item C<locale>
+
+The language requested by the client. Defaults to the C<LANG> constant
+C<en> (for English)
+
+=back
+
+Defines the following configuration attributes
+
+=over 3
+
+=item C<gettext>
+
+A code reference. Defaults to one which returns it's first argument. The first
+argument is the lookup key, the second argument is a hash reference of
+options
+
+=item C<l10n_domain>
+
+A non empty simple string which defaults to F<messages>. The default message
+catalogue
+
+=item C<locale>
+
+A non empty simple string which defaults to the constant C<LANG>. The
+default locale for the application
+
+=item C<locales>
+
+An array reference of non empty simple strings. Defaults to a list containing
+the C<LANG> constant. Defines the list of locales supported by the
+application
+
+=item C<quote_bind_values>
+
+A boolean which defaults to true. Causes the bind values in parameter
+substitutions to be quoted
+
 =back
 
 =head1 Subroutines/Methods
 
+=head2 C<loc>
+
+   $localised_string = $self->loc( $key, @args );
+
+Translates C<$key> into the required language and substitutes the bind values.
+The C<locale> is currently set in configuration but will be extracted from
+the request in a future release
+
+=head2 C<loc_default>
+
+Like the C<loc> method but always translates to the default language
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Unexpected>
 
 =back
 
