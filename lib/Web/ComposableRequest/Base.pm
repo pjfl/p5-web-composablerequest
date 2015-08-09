@@ -98,6 +98,9 @@ has 'script'         => is => 'lazy', isa => SimpleStr, builder => sub {
 has 'tunnel_method'  => is => 'lazy', isa => NonEmptySimpleStr,
    builder           => $_build_tunnel_method;
 
+has 'upload'         => is => 'lazy', isa => Object | Undef,
+   predicate         => TRUE;
+
 has 'uri'            => is => 'lazy', isa => Object, builder => sub {
    new_uri $_[ 0 ]->_base.$_[ 0 ]->path, $_[ 0 ]->scheme };
 
@@ -365,6 +368,10 @@ The request path
 The C<_method> attribute from the body of a post or from the query parameters
 in the event of a get request
 
+=item C<upload>
+
+The upload object if one was supplied in the request. Undefined otherwise
+
 =item C<uri>
 
 The URI of the current request. Does not include the query parameters
@@ -408,15 +415,21 @@ Decodes the URI and query parameters
 
 =head2 C<body_params>
 
-   $code_ref = $self->body_params; $value = $code_ref->( 'key' );
+   $code_ref = $req->body_params; $value = $code_ref->( 'key' );
 
 Returns a code reference which when called with a body parameter name returns
 the body parameter value after first scrubbing it of "dodgy" characters. Throws
 if the value is undefined or tainted
 
+=head2 C<has_upload>
+
+   $bool = $req->has_upload;
+
+Return true if the request contains an upload, false otherwise
+
 =head2 C<query_params>
 
-   $code_ref = $self->query_params; $value = $code_ref->( 'key' );
+   $code_ref = $req->query_params; $value = $code_ref->( 'key' );
 
 Returns a code reference which when called with a query parameter name returns
 the query parameter value after first scrubbing it of "dodgy" characters. Throws
@@ -424,14 +437,14 @@ if the value is undefined or tainted
 
 =head2 C<uri_for>
 
-   $uri_obj = $self->uri_for( $partial_uri_path, $args, $query_params );
+   $uri_obj = $req->uri_for( $partial_uri_path, $args, $query_params );
 
 Prefixes C<$partial_uri_path> with the base of the current request. Returns
 an absolute URI
 
 =head2 C<uri_params>
 
-   $code_ref = $self->uri_params; $value = $code_ref->( $index );
+   $code_ref = $req->uri_params; $value = $code_ref->( $index );
 
 Returns a code reference which when called with an integer index returns
 the uri parameter value after first scrubbing it of "dodgy" characters. Throws

@@ -4,15 +4,16 @@ use namespace::autoclean;
 
 use Web::ComposableRequest::Constants qw( FALSE NUL TRUE );
 use Web::ComposableRequest::Util      qw( bson64id );
-use Unexpected::Types                 qw( Bool CodeRef HashRef NonEmptySimpleStr
-                                          NonZeroPositiveInt Object SimpleStr
-                                          Undef );
+use Unexpected::Types                 qw( ArrayRef Bool CodeRef HashRef
+                                          NonEmptySimpleStr NonZeroPositiveInt
+                                          Object SimpleStr Undef );
 use Moo;
 
 # Public attributes
 has 'authenticated' => is => 'rw',  isa => Bool, default => FALSE;
 
-has 'messages'      => is => 'ro',  isa => HashRef, builder => sub { {} };
+has 'messages'      => is => 'ro',  isa => HashRef[ArrayRef],
+   builder          => sub { {} };
 
 has 'updated'       => is => 'ro',  isa => NonZeroPositiveInt, required => TRUE;
 
@@ -32,7 +33,8 @@ has '_session'      => is => 'ro',  isa => HashRef, init_arg => 'session',
 
 # Private functions
 my $_session_attr = sub {
-   my $config = shift; my @attrs = qw( authenticated messages username );
+   my $config = shift;
+   my @attrs  = qw( authenticated messages updated username );
 
    return sort keys %{ $config->session_attr }, @attrs;
 };
@@ -95,7 +97,7 @@ sub trim_message_queue {
 }
 
 sub update {
-   my $self = shift; $self->trim_message_queue;
+   my $self = shift;
 
    for my $k ($_session_attr->( $self->_config )) {
       $self->_session->{ $k } = $self->$k();
@@ -104,6 +106,10 @@ sub update {
    $self->_session->{updated} = time;
    return;
 }
+
+before 'update' => sub {
+   my $self = shift; $self->trim_message_queue; return;
+};
 
 1;
 

@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Minimum test coverage
           - Passing author tests
           - Added main POD
           - Added Cookie and JSON roles

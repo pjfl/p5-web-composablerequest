@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 6 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 7 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -62,11 +62,11 @@ sub new_from_simple_request {
    my $request_class = $self->request_class; # Trigger role application
 
    $attr->{config} = $self->config;          # Composed after request_class
-   $attr->{env   } = (is_hashref $args[ -1 ]) ? pop @args : {};
-   $attr->{params} = (is_hashref $args[ -1 ]) ? pop @args : {};
-   $attr->{args  } = (defined $args[ 0 ] && blessed $args[ 0 ])
-                   ? [ $args[ 0 ] ]          # Upload object
-                   : [ split m{ / }mx, trim $args[ 0 ] || NUL ];
+   @args and is_hashref $args[ -1 ] and $attr->{env   } = pop @args;
+   @args and is_hashref $args[ -1 ] and $attr->{params} = pop @args;
+
+   if ((@args and blessed $args[ 0 ])) { $attr->{upload} = $args[ 0 ] }
+   else { $attr->{args} = [ split m{ / }mx, trim $args[ 0 ] || NUL ] };
 
    return $request_class->new( $attr );
 }

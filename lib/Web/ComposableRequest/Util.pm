@@ -16,7 +16,7 @@ use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS LANG );
 
 our @EXPORT_OK  = qw( base64_decode_ns base64_encode_ns bson64id bson64id_time
                       decode_array decode_hash deref extract_lang first_char
-                      is_arrayref is_coderef is_hashref is_member new_uri
+                      is_arrayref is_hashref is_member new_uri
                       request_config_roles trim thread_id throw uri_escape );
 
 my $bson_id_count  = 0;
@@ -193,10 +193,6 @@ sub is_arrayref (;$) {
    return $_[ 0 ] && ref $_[ 0 ] eq 'ARRAY' ? 1 : 0;
 }
 
-sub is_coderef (;$) {
-   return $_[ 0 ] && ref $_[ 0 ] eq 'CODE' ? 1 : 0;
-}
-
 sub is_hashref (;$) {
    return $_[ 0 ] && ref $_[ 0 ] eq 'HASH' ? 1 : 0;
 }
@@ -331,12 +327,6 @@ Returns the first character of C<$string>
    $bool = is_arrayref $scalar_variable
 
 Tests to see if the scalar variable is an array ref
-
-=head2 C<is_coderef>
-
-   $bool = is_coderef $scalar_variable
-
-Tests to see if the scalar variable is a code ref
 
 =head2 C<is_hashref>
 
