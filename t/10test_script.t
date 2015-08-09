@@ -6,9 +6,9 @@ use IO::String;
 use Scalar::Util      qw( blessed );
 use Unexpected::Types qw( NonEmptySimpleStr );
 
+use_ok 'Web::ComposableRequest::Constants', qw( );
 use_ok 'Web::ComposableRequest';
 use_ok 'Web::ComposableRequest::Util', qw( bson64id_time );
-use_ok 'Web::ComposableRequest::Constants', qw( );
 
 my $now     = time;
 my $config  = {

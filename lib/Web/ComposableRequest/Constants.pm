@@ -4,10 +4,33 @@ use strictures;
 use parent 'Exporter::Tiny';
 
 use Web::ComposableRequest::Exception;
+use Role::Tiny ();
 
 our @EXPORT = qw( EXCEPTION_CLASS FALSE LANG NUL TRUE );
 
 my $Exception_Class = 'Web::ComposableRequest::Exception';
+
+no warnings 'redefine';
+
+my $role_suffix = 'A000';
+
+*Role::Tiny::_composite_name = sub {
+  my ($me, $superclass, @roles) = @_;
+
+  my $new_name = join(
+    '__WITH__', $superclass, my $compose_name = join( '__AND__', @roles )
+  );
+
+  if (length($new_name) > 240) {
+    $new_name = $Role::Tiny::COMPOSED{abbrev}{$new_name} ||= do {
+      my $abbrev = substr $new_name, 0, 238 - length $role_suffix;
+      $abbrev =~ s/(?<!:):$//;
+      $abbrev.'__'.$role_suffix++;
+    };
+  }
+
+  return wantarray ? ($new_name, $compose_name) : $new_name;
+};
 
 sub FALSE () { 0    }
 sub LANG  () { 'en' }

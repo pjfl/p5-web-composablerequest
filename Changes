@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Monkey patch Role::Tiny until RT#106276 is fixed
           - Minimum test coverage
           - Passing author tests
           - Added main POD
