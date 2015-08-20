@@ -2,15 +2,15 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 9 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 10 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
 use Web::ComposableRequest::Config;
 use Web::ComposableRequest::Constants qw( NUL );
-use Web::ComposableRequest::Util      qw( deref is_hashref
+use Web::ComposableRequest::Util      qw( is_hashref merge_attributes
                                           request_config_roles trim );
-use Unexpected::Types                 qw( HashRef NonEmptySimpleStr
+use Unexpected::Types                 qw( CodeRef HashRef NonEmptySimpleStr
                                           Object Undef );
 use Moo::Role ();
 use Moo;
@@ -31,18 +31,25 @@ my $_build_request_class = sub {
    my $self  = shift;
    my $base  = __PACKAGE__.'::Base';
    my $conf  = $self->config_attr or return $base;
-   my $class = deref( $conf, 'request_class' ) // $base;
-   my @roles = @{ deref( $conf, 'request_roles' ) // [] };
+   my $deflt = { request_class => $base, request_roles => [] };
+   my $attr  = {};
 
-   @roles > 0 or return $class;
+   merge_attributes $attr, $conf, $deflt, [ keys %{ $deflt } ];
+
+   my @roles = @{ $attr->{request_roles} };
+
+   @roles > 0 or return $attr->{request_class};
 
    @roles = map { (substr $_, 0, 1 eq '+')
                 ?  substr $_, 1 : __PACKAGE__."::Role::${_}" } @roles;
 
-   return Moo::Role->create_class_with_roles( $class, @roles );
+   return Moo::Role->create_class_with_roles( $attr->{request_class}, @roles );
 };
 
 # Public attributes
+has 'buildargs'     => is => 'lazy', isa => CodeRef,
+   builder          => sub { sub { return $_[ 1 ] } };
+
 has 'config'        => is => 'lazy', isa => Object,
    builder          => $_build_config, init_arg => undef;
 
@@ -68,7 +75,7 @@ sub new_from_simple_request {
    if ((@args and blessed $args[ 0 ])) { $attr->{upload} = $args[ 0 ] }
    else { $attr->{args} = [ split m{ / }mx, trim $args[ 0 ] || NUL ] };
 
-   return $request_class->new( $attr );
+   return $request_class->new( $self->buildargs->( $self, $attr ) );
 }
 
 1;
@@ -122,6 +129,13 @@ Composes a request class from a base class plus a selection of applied roles
 Defines the following attributes;
 
 =over 3
+
+=item C<buildargs>
+
+A code reference. The default when called returns it's second arguement. It is
+called with the factory object reference and the attributes for constructing
+the request. It is expected to return the hash reference used to construct the
+request object
 
 =item C<config>
 

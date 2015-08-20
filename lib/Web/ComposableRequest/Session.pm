@@ -2,8 +2,8 @@ package Web::ComposableRequest::Session;
 
 use namespace::autoclean;
 
-use Web::ComposableRequest::Constants qw( FALSE NUL TRUE );
-use Web::ComposableRequest::Util      qw( bson64id );
+use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS FALSE NUL TRUE );
+use Web::ComposableRequest::Util      qw( bson64id is_arrayref throw );
 use Unexpected::Types                 qw( ArrayRef Bool CodeRef HashRef
                                           NonEmptySimpleStr NonZeroPositiveInt
                                           Object SimpleStr Undef );
@@ -33,10 +33,9 @@ has '_session'      => is => 'ro',  isa => HashRef, init_arg => 'session',
 
 # Private functions
 my $_session_attr = sub {
-   my $config = shift;
-   my @attrs  = qw( authenticated messages updated username );
+   my $conf = shift; my @public = qw( authenticated messages updated username );
 
-   return sort keys %{ $config->session_attr }, @attrs;
+   return keys %{ $conf->session_attr }, @public;
 };
 
 # Construction
@@ -60,13 +59,23 @@ sub BUILD {
       my $username = $self->username; $self->authenticated( FALSE );
       my $message  = 'User [_1] session expired';
 
-      $self->_set__mid( $self->status_message( [ $message, $username ] ) );
+      $self->_set__mid( $self->add_status_message( [ $message, $username ] ) );
    }
 
    return;
 }
 
 # Public methods
+sub add_status_message {
+   my ($self, $msg) = @_;
+
+   is_arrayref $msg or throw 'Parameter [_1] not an array reference', [ $msg ];
+
+   my $mid = bson64id; $self->messages->{ $mid } = $msg;
+
+   return $mid;
+}
+
 sub collect_status_message {
    my ($self, $req) = @_; my ($mid, $msg);
 
@@ -79,11 +88,7 @@ sub collect_status_message {
       and $self->_log->( { level   => 'debug',
                            message => $req->loc_default( @{ $msg } ) } );
 
-   return $msg ? $req->loc( @{ $msg } ) : NUL;
-}
-
-sub status_message {
-   my $mid = bson64id; $_[ 0 ]->messages->{ $mid } = $_[ 1 ]; return $mid;
+   return $msg ? $req->loc( @{ $msg } ) : undef;
 }
 
 sub trim_message_queue {
@@ -201,17 +206,19 @@ boolean to false
 Copies the session values into the hash reference used to instantiate the
 object from the Plack environment
 
+=head2 C<add_status_message>
+
+   $message_id = $session->add_status_message( $message );
+
+Appends the message to the message queue for this session. The C<$message>
+argument is an array reference, first the message then the positional
+parameters
+
 =head2 C<collect_status_message>
 
    $localised_message = $session->collect_status_message( $req );
 
 Returns the next message in the queue (if there is one) for the given request
-
-=head2 C<status_message>
-
-   $message_id = $session->status_message( $message );
-
-Appends the message to the message queue for this session
 
 =head2 C<trim_message_queue>
 

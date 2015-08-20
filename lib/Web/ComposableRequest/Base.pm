@@ -138,11 +138,12 @@ sub BUILD {
 
 # Private functions
 my $_defined_or_throw = sub {
-   my ($k, $v, $opts) = @_; $k =~ m{ \A \d+ \z }mx and $k = "arg[${k}]";
+   my ($k, $v, $opts) = @_; $opts->{optional} and return $v;
 
-   $opts->{optional} or defined $v
-      or throw 'Parameter [_1] undefined value', [ $k ],
-               level => 6, rv => HTTP_EXPECTATION_FAILED;
+   $k =~ m{ \A \d+ \z }mx and $k = "arg[${k}]";
+
+   defined $v or throw 'Parameter [_1] undefined value', [ $k ],
+                       level => 6, rv => HTTP_EXPECTATION_FAILED;
 
    return $v;
 };
@@ -157,7 +158,9 @@ my $_get_value_or_values = sub {
    defined $name or throw Unspecified, [ 'name' ],
                           level => 5, rv => HTTP_INTERNAL_SERVER_ERROR;
 
-   my $v = (is_arrayref $params) ? $params->[ $name ] : $params->{ $name };
+   my $v = (is_arrayref $params) ? ($name == -1) ? [ @{ $params } ]
+                                                 : $params->[ $name ]
+                                                 : $params->{ $name };
 
    return $_defined_or_throw->( $name, $v, $opts );
 };
@@ -254,7 +257,10 @@ sub uri_params {
 
    my $params = $self->_args; weaken( $params );
 
-   return sub { $_get_scrubbed_param->( $self, $params, @_ ) };
+   return sub {
+      return $_get_scrubbed_param->
+         ( $self, $params, (defined $_[ 0 ]) ? @_ : (-1, { multiple => TRUE }));
+   };
 }
 
 1;
@@ -273,15 +279,19 @@ Web::ComposableRequest::Base - Request class core attributes and methods
 
    package Web::ComposableRequest;
 
-   use Web::ComposableRequest::Util qw( deref );
+   use Web::ComposableRequest::Util qw( merge_attributes );
    use Unexpected::Types            qw( NonEmptySimpleStr );
 
    my $_build_request_class = sub {
       my $self  = shift;
       my $base  = __PACKAGE__.'::Base';
       my $conf  = $self->config_attr or return $base;
-      my $class = deref( $conf, 'request_class' ) // $base;
-      my @roles = @{ deref( $conf, 'request_roles' ) // [] };
+      my $attr  = {};
+
+      merge_attributes $attr, $conf, {} [ 'request_class', 'request_roles' ];
+
+      my $class = $attr->{request_class} // $base;
+      my @roles = $attr->{request_roles} // [];
 
       @roles > 0 or return $class;
 
@@ -415,7 +425,7 @@ Decodes the URI and query parameters
 
 =head2 C<body_params>
 
-   $code_ref = $req->body_params; $value = $code_ref->( 'key' );
+   $code_ref = $req->body_params; $value = $code_ref->( 'key', $opts );
 
 Returns a code reference which when called with a body parameter name returns
 the body parameter value after first scrubbing it of "dodgy" characters. Throws
@@ -429,7 +439,7 @@ Return true if the request contains an upload, false otherwise
 
 =head2 C<query_params>
 
-   $code_ref = $req->query_params; $value = $code_ref->( 'key' );
+   $code_ref = $req->query_params; $value = $code_ref->( 'key', $opts );
 
 Returns a code reference which when called with a query parameter name returns
 the query parameter value after first scrubbing it of "dodgy" characters. Throws
@@ -444,11 +454,14 @@ an absolute URI
 
 =head2 C<uri_params>
 
-   $code_ref = $req->uri_params; $value = $code_ref->( $index );
+   $code_ref = $req->uri_params; $value = $code_ref->( $index, $opts );
 
 Returns a code reference which when called with an integer index returns
 the uri parameter value after first scrubbing it of "dodgy" characters. Throws
 if the value is undefined or tainted
+
+If the index is C<-1> and the option C<multiple> is true, returns an array
+reference of all the uri parameters
 
 =head1 Diagnostics
 

@@ -15,8 +15,8 @@ use URI::https;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS LANG );
 
 our @EXPORT_OK  = qw( base64_decode_ns base64_encode_ns bson64id bson64id_time
-                      decode_array decode_hash deref extract_lang first_char
-                      is_arrayref is_hashref is_member new_uri
+                      decode_array decode_hash extract_lang first_char
+                      is_arrayref is_hashref is_member merge_attributes new_uri
                       request_config_roles trim thread_id throw uri_escape );
 
 my $bson_id_count  = 0;
@@ -173,14 +173,6 @@ sub decode_hash ($$) {
    return;
 }
 
-sub deref (;$$) {
-   my ($x, $k) = @_; $x and $k or return;
-
-   blessed   ( $x ) and $x->can( $k )     and return $x->$k();
-   is_hashref( $x ) and exists $x->{ $k } and return $x->{ $k };
-   return;
-}
-
 sub extract_lang ($) {
    my $v = shift; return $v ? (split m{ _ }mx, $v)[ 0 ] : LANG;
 }
@@ -203,6 +195,19 @@ sub is_member (;@) {
    is_arrayref $args[ 0 ] and @args = @{ $args[ 0 ] };
 
    return (first { $_ eq $candidate } @args) ? 1 : 0;
+}
+
+sub merge_attributes ($$$;$) {
+   my ($dest, $src, $defaults, $attrs) = @_; my $class = blessed $src;
+
+   for (grep { not exists $dest->{ $_ } or not defined $dest->{ $_ } }
+        @{ $attrs // [] }) {
+      my $v = $class ? ($src->can( $_ ) ? $src->$_() : undef) : $src->{ $_ };
+
+      defined $v or $v = $defaults->{ $_ }; defined $v and $dest->{ $_ } = $v;
+   }
+
+   return $dest;
 }
 
 sub new_uri ($$) {
@@ -302,13 +307,6 @@ Applies L<Encode/decode> to each element in the supplied list
 
 Applies L<Encode/decode> to both the keys and values of the supplied hash
 
-=head2 C<deref>
-
-   $value = deref $reftype, $key;
-
-The C<$reftype> can be either an object reference or a hash reference. Returns
-the value for the corresponding key
-
 =head2 C<extract_lang>
 
    $language_code = extract_lang $locale;
@@ -340,6 +338,15 @@ Tests to see if the scalar variable is a hash ref
 
 Tests to see if the first parameter is present in the list of
 remaining parameters
+
+=head2 merge_attributes
+
+   $dest = merge_attributes $dest, $src, $defaults, $attr_list_ref;
+
+Merges attribute hashes. The C<$dest> hash is updated and returned. The
+C<$dest> hash values take precedence over the C<$src> hash values which
+take precedence over the C<$defaults> hash values. The C<$src> hash
+may be an object in which case its accessor methods are called
 
 =head2 C<new_uri>
 

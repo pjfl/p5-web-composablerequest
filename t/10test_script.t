@@ -19,6 +19,8 @@ my $config  = {
    scrubber      => '[^_~+0-9A-Za-z]' };
 my $factory = Web::ComposableRequest->new( config => $config );
 
+is blessed( $factory ), 'Web::ComposableRequest', 'Factory right class';
+
 my $session = { authenticated => 1 };
 my $args    = 'arg1/arg2/arg-3';
 my $query   = { key => '123-4' };
@@ -31,10 +33,10 @@ my $env     = {
    HTTP_ACCEPT_LANGUAGE => 'en-gb,en;q=0.7,de;q=0.3',
    HTTP_COOKIE          => $cookie,
    HTTP_HOST            => 'localhost:5000',
-   PATH_INFO            => '/Getting-Started',
+   PATH_INFO            => '/api',
    QUERY_STRING         => 'key=124-4',
    REMOTE_ADDR          => '127.0.0.1',
-   REQUEST_METHOD       => 'GET',
+   REQUEST_METHOD       => 'POST',
    'psgi.input'         => IO::String->new( $input ),
    'psgix.logger'       => sub { warn $_[ 0 ]->{message}."\n" },
    'psgix.session'      => $session,
@@ -44,21 +46,24 @@ my $req     = $factory->new_from_simple_request( {}, $args, $query, $env );
 is $req->_config->encoding, 'UTF-8', 'Default encoding';
 is $req->_config->max_asset_size, 4_194_304, 'Default max asset size';
 is $req->_config->scrubber, '[^_~+0-9A-Za-z]', 'Non default scrubber';
-is $req->_config->l10n_domain, 'messages', 'Config attribute from role';
+is $req->_config->l10n_attributes->{domains}->[ 0 ], 'messages',
+   'Config attribute from role';
 is $req->_config->max_sess_time, 1, 'Config attribute from another role';
 is $req->address, '127.0.0.1', 'Remote address';
 is $req->base, 'http://localhost:5000/', 'Request base';
 is $req->host, 'localhost', 'Client host';
 is $req->port, 80, 'Default port';
-is $req->method, 'get', 'Request method';
+is $req->method, 'post', 'Request method';
 is $req->query, '?key=124-4', 'Request query';
 is $req->remote_host, q(), 'Remote host';
-is $req->uri, 'http://localhost:5000/Getting-Started', 'Builds URI';
+is $req->uri, 'http://localhost:5000/api', 'Builds URI';
 is $req->has_upload, q(), 'Upload predicate false';
 is $req->query_params->( 'key' ), 1234, 'Query params scrubs unwanted chars';
 is $req->query_params->( 'key', { raw => 1 } ), '123-4', 'Query params raw val';
 is $req->uri_params->( 2 ), 'arg3', 'URI params scrubs unwanted chars';
 is $req->uri_params->( 2, { raw => 1 } ), 'arg-3', 'URI params raw value';
+is join( '/', @{ $req->uri_params->( -1, { multiple => 1, raw => 1 } )}), $args,
+   'URI params all args';
 is $req->body_params->( 'key' ), 'value1', 'Body params scrubs unwanted chars';
 is $req->body_params->( 'key', { raw => 1 } ), 'value-1', 'Body params raw val';
 is $req->tunnel_method, 'delete', 'Tunnel method from body params';
@@ -72,11 +77,12 @@ is $req->get_cookie_hash( 'cookie2' )->{key4}, 'val4', 'Gets cookie value 4';
 is $req->session->theme, 'green', 'Default session attribute value';
 is $session->{theme}, undef, 'Envirnoment hash value undef';
 
-$req->session->status_message( [ 'bite [_1]',  'her'    ] );
-$req->session->status_message( [ 'bite [_1]', [ 'him' ] ] );
-$req->session->status_message( [ 'bite any'             ] );
+$req->session->add_status_message( [ 'bite [_1]',  'her'    ] );
+$req->session->add_status_message( [ 'bite [_1]', [ 'him' ] ] );
+$req->session->add_status_message( [ 'bite any'             ] );
 
-my $mid = $req->session->status_message( [ 'bite {arg1}', { arg1 => 'me' } ] );
+my $params = { arg1 => 'me' };
+my $mid    = $req->session->add_status_message( [ 'bite {arg1}', $params ] );
 
 $req->session->update;
 
@@ -90,7 +96,7 @@ is $session->{theme}, 'red', 'Updates envirnoment hash';
 sleep 2; # For the benifit of session timeout
 $query = { _method => 'post', locale => 'en', mid => $mid };
 $env   = { HTTP_HOST       => 'localhost:5000',
-           PATH_INFO       => '/Getting-Started',
+           PATH_INFO       => '/api',
            'psgix.session' => $session,
          };
 $req   = $factory->new_from_simple_request( {}, undef, $query, $env );
@@ -104,16 +110,16 @@ like $req->session->collect_status_message( $req ),
 $req->session->update;
 $query = { locale => 'de', mode => 'static' };
 $env   = { HTTP_HOST       => 'localhost:5000',
-           PATH_INFO       => '/Getting-Started',
+           PATH_INFO       => '/api',
            'psgix.session' => $session,
            'psgix.logger'  => sub { warn $_[ 0 ]->{message}."\n" },
          };
 $req   = $factory->new_from_simple_request( {}, '', $query, $env );
 
-is $req->session->collect_status_message( $req ), q(), 'No left over messages';
+is $req->session->collect_status_message( $req ), undef, 'No more messages';
 is $req->authenticated, 0, 'Session timed out';
 is $req->tunnel_method, 'not_found', 'Tunnel method default';
-is $req->uri, '../en/Getting-Started.html', 'Builds static URI';
+is $req->uri, '../en/api.html', 'Builds static URI';
 is $req->uri_for, '../en/index.html', 'Default static uri_for';
 
 $req = $factory->new_from_simple_request( {}, q() );

@@ -2,10 +2,8 @@ package Web::ComposableRequest::Role::L10N;
 
 use namespace::autoclean;
 
-use Scalar::Util                      qw( weaken );
 use Web::ComposableRequest::Constants qw( NUL TRUE );
-use Web::ComposableRequest::Util      qw( extract_lang is_arrayref
-                                          is_hashref is_member
+use Web::ComposableRequest::Util      qw( extract_lang is_member
                                           request_config_roles );
 use Unexpected::Functions             qw( inflate_placeholders );
 use Unexpected::Types                 qw( ArrayRef CodeRef NonEmptySimpleStr
@@ -40,16 +38,13 @@ my $_build_locales = sub {
             split m{ , }mx, lc $lang ];
 };
 
-my $_build__localise = sub {
-   my $self = shift; my $gettext = $self->_config->gettext; weaken( $gettext );
-
+my $_build_localiser = sub {
    return sub {
       my ($key, $args) = @_;
 
-      $key or return; $key = "${key}"; chomp $key; $args //= {};
+      defined $key or return; $key = "${key}"; chomp $key; $args //= {};
 
-      # Lookup the message using the supplied key from the po file
-      my $text = $gettext->( $key, $args );
+      my $text = $key;
 
       if (defined $args->{params} and ref $args->{params} eq 'ARRAY') {
          0 > index $text, '[_' and return $text;
@@ -72,31 +67,46 @@ my $_build__localise = sub {
 };
 
 # Public attributes
-has 'domain'    => is => 'lazy', isa => NonEmptySimpleStr | Undef,
-   builder      => sub {};
+has 'domain'        => is => 'lazy', isa => NonEmptySimpleStr | Undef,
+   builder          => sub {};
 
-has 'language'  => is => 'lazy', isa => NonEmptySimpleStr,
-   builder      => sub { extract_lang $_[ 0 ]->locale };
+has 'domain_prefix' => is => 'lazy', isa => NonEmptySimpleStr | Undef,
+   builder          => sub {};
 
-has 'locale'    => is => 'lazy', isa => NonEmptySimpleStr,
-   builder      => $_build_locale;
+has 'language'      => is => 'lazy', isa => NonEmptySimpleStr,
+   builder          => sub { extract_lang $_[ 0 ]->locale };
 
-has 'locales'   => is => 'lazy', isa => ArrayRef[NonEmptySimpleStr],
-   builder      => $_build_locales;
+has 'locale'        => is => 'lazy', isa => NonEmptySimpleStr,
+   builder          => $_build_locale;
 
-# Private attributes
-has '_localise' => is => 'lazy', isa => CodeRef, builder => $_build__localise;
+has 'locales'       => is => 'lazy', isa => ArrayRef[NonEmptySimpleStr],
+   builder          => $_build_locales;
+
+has 'localiser'     => is => 'lazy', isa => CodeRef,
+   builder          => $_build_localiser;
 
 # Private methods
+my $_domains;
+
+my $_get_domains = sub {
+   my $self    = shift;
+   my $domains = [ @{ $self->_config->l10n_attributes->{domains} // [] } ];
+   my $domain  = $self->domain or return $domains;
+   my $prefix  = $self->domain_prefix;
+
+   $prefix and $domain = "${prefix}_${domain}"; push @{ $domains }, $domain;
+
+   return $domains;
+};
+
 my $_localise_args = sub {
    my $self = shift;
-   my $args = (is_hashref $_[ 0 ]) ? { %{ $_[ 0 ] } }
-            : { params => (is_arrayref $_[ 0 ]) ? $_[ 0 ] : [ @_ ] };
+   my $args =             ($_[ 0 ] && ref $_[ 0 ] eq 'HASH' ) ? { %{ $_[ 0 ] } }
+            : { params => ($_[ 0 ] && ref $_[ 0 ] eq 'ARRAY') ? $_[ 0 ]
+                                                              : [ @_ ] };
 
    not exists $args->{domains}
-      and $args->{domains} = [ $self->_config->l10n_domain ]
-      and $self->domain
-      and $args->{domains}->[ 1 ] = $self->domain;
+          and $args->{domains} = $_domains //= $_get_domains->( $self );
 
    $args->{no_quote_bind_values} //= not $self->_config->quote_bind_values;
 
@@ -109,7 +119,7 @@ sub loc {
 
    $args->{locale} //= $self->locale;
 
-   return $self->_localise->( $key, $args );
+   return $self->localiser->( $key, $args );
 }
 
 sub loc_default {
@@ -117,7 +127,7 @@ sub loc_default {
 
    $args->{locale} = $self->_config->locale;
 
-   return $self->_localise->( $key, $args );
+   return $self->localiser->( $key, $args );
 }
 
 package Web::ComposableRequest::Role::L10N::Config;
@@ -125,16 +135,13 @@ package Web::ComposableRequest::Role::L10N::Config;
 use namespace::autoclean;
 
 use Web::ComposableRequest::Constants qw( LANG TRUE );
-use Unexpected::Types                 qw( ArrayRef Bool CodeRef
+use Unexpected::Types                 qw( ArrayRef Bool HashRef
                                           NonEmptySimpleStr );
 use Moo::Role;
 
 # Public attributes
-has 'gettext'           => is => 'ro', isa => CodeRef,
-   builder              => sub { sub { $_[ 0 ] } };
-
-has 'l10n_domain'       => is => 'ro', isa => NonEmptySimpleStr,
-   default              => 'messages';
+has 'l10n_attributes'   => is => 'ro', isa => HashRef,
+   builder              => sub { { domains => [ 'messages' ] } };
 
 has 'locale'            => is => 'ro', isa => NonEmptySimpleStr,
    default              => LANG;

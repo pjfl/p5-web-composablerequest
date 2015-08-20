@@ -4,7 +4,7 @@ use namespace::autoclean;
 
 use Class::Inspector;
 use Unexpected::Types            qw( NonEmptySimpleStr PositiveInt Str );
-use Web::ComposableRequest::Util qw( deref is_member );
+use Web::ComposableRequest::Util qw( merge_attributes is_member );
 use Moo;
 
 my $_list_attr_of = sub {
@@ -28,11 +28,10 @@ has 'scrubber'       => is => 'ro', isa => Str,
 
 # Construction
 around 'BUILDARGS' => sub {
-   my ($orig, $self, $config) = @_; my $attr = {}; $config or return $attr;
+   my ($orig, $self, $config) = @_; my $attr = {};
 
-   for my $k ($_list_attr_of->( $self )) {
-       my $v = deref $config, $k; defined $v and $attr->{ $k } = $v;
-   }
+   defined $config
+       and merge_attributes $attr, $config, {}, [ $_list_attr_of->( $self ) ];
 
    return $attr;
 };
