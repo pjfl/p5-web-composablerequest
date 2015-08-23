@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.2.1     2015-08-23 23:17:18
           - Works with App::Doh
           - Monkey patch Role::Tiny until RT#106276 is fixed
           - Minimum test coverage

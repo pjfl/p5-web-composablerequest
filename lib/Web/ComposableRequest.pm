@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 10 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.2.%d', q$Rev: 1 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -132,7 +132,7 @@ Defines the following attributes;
 
 =item C<buildargs>
 
-A code reference. The default when called returns it's second arguement. It is
+A code reference. The default when called returns it's second argument. It is
 called with the factory object reference and the attributes for constructing
 the request. It is expected to return the hash reference used to construct the
 request object

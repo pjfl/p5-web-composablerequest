@@ -11,7 +11,7 @@ requires qw( locale path query_params scheme _base );
 around '_build__base' => sub {
    my ($orig, $self) = @_; $self->mode eq 'static' or return $orig->( $self );
 
-   return '../' x scalar split m{ / }mx, $self->path;
+   my $count = () = split m{ / }mx, $self->path, -1; return '../' x $count;
 };
 
 around '_build_uri' => sub {

@@ -5,6 +5,7 @@ requires "HTTP::Body" => "1.22";
 requires "HTTP::Message" => "6.06";
 requires "JSON::MaybeXS" => "1.003005";
 requires "Moo" => "2.000001";
+requires "Role::Tiny" => "2.000001";
 requires "Subclass::Of" => "0.003";
 requires "Try::Tiny" => "0.22";
 requires "URI" => "1.67";

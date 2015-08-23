@@ -40,6 +40,13 @@ Composes a request class from a base class plus a selection of applied roles
 
 Defines the following attributes;
 
+- `buildargs`
+
+    A code reference. The default when called returns it's second argument. It is
+    called with the factory object reference and the attributes for constructing
+    the request. It is expected to return the hash reference used to construct the
+    request object
+
 - `config`
 
     A configuration object created by passing the ["config\_attr"](#config_attr) to the constructor

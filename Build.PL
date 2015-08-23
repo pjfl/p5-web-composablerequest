@@ -25,6 +25,7 @@ my $prereqs  = {
     'HTTP::Message' => '6.06',
     'JSON::MaybeXS' => '1.003005',
     'Moo' => '2.000001',
+    'Role::Tiny' => '2.000001',
     'Subclass::Of' => '0.003',
     'Try::Tiny' => '0.22',
     'URI' => '1.67',
