@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.2.%d', q$Rev: 1 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.2.%d', q$Rev: 2 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -85,6 +85,14 @@ __END__
 =pod
 
 =encoding utf-8
+
+=begin html
+
+<a href="https://travis-ci.org/pjfl/p5-web-composablerequest"><img src="https://travis-ci.org/pjfl/p5-web-composablerequest.svg?branch=master" alt="Travis CI Badge"></a>
+<a href="http://badge.fury.io/pl/Web-ComposableRequest"><img src="https://badge.fury.io/pl/Web-ComposableRequest.svg" alt="CPAN Badge"></a>
+<a href="http://cpants.cpanauthors.org/dist/Web-ComposableRequest"><img src="http://cpants.cpanauthors.org/dist/Web-ComposableRequest.png" alt="Kwalitee Badge"></a>
+
+=end html
 
 =head1 Name
 
