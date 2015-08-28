@@ -159,10 +159,10 @@ my $_get_value_or_values = sub {
    defined $name or throw Unspecified, [ 'name' ],
                           level => 5, rv => HTTP_INTERNAL_SERVER_ERROR;
 
-   my $v = (is_arrayref $params && $name eq '-1') ? [ @{ $params } ]
-         : (is_arrayref $params                 ) ? $params->[ $name ]
-         : (                       $name eq '-1') ? $params
-                                                  : $params->{ $name };
+   my $v = (is_arrayref $params and $name eq '-1') ? [ @{ $params } ]
+         : (is_arrayref $params                  ) ? $params->[ $name ]
+         : (                        $name eq '-1') ? $params
+                                                   : $params->{ $name };
 
    return $_defined_or_throw->( $name, $v, $opts );
 };

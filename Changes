@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.3.1     2015-08-28 17:05:34
           - Added hashref inflation for body_params and query_params
           - Fixed left over undecoded keys error in Util decode_hash
           - Added badge markup
