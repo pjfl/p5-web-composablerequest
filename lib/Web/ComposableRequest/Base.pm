@@ -10,7 +10,8 @@ use Scalar::Util                      qw( weaken );
 use Try::Tiny;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS NUL TRUE );
 use Web::ComposableRequest::Util      qw( decode_array decode_hash first_char
-                                          is_arrayref new_uri throw );
+                                          is_arrayref is_hashref new_uri
+                                          throw );
 use Unexpected::Functions             qw( Unspecified );
 use Unexpected::Types                 qw( ArrayRef CodeRef HashRef LoadableClass
                                           NonEmptySimpleStr NonZeroPositiveInt
@@ -158,9 +159,10 @@ my $_get_value_or_values = sub {
    defined $name or throw Unspecified, [ 'name' ],
                           level => 5, rv => HTTP_INTERNAL_SERVER_ERROR;
 
-   my $v = (is_arrayref $params) ? ($name == -1) ? [ @{ $params } ]
-                                                 : $params->[ $name ]
-                                                 : $params->{ $name };
+   my $v = (is_arrayref $params && $name eq '-1') ? [ @{ $params } ]
+         : (is_arrayref $params                 ) ? $params->[ $name ]
+         : (                       $name eq '-1') ? $params
+                                                  : $params->{ $name };
 
    return $_defined_or_throw->( $name, $v, $opts );
 };
@@ -198,11 +200,30 @@ my $_scrub_value = sub {
    return $v;
 };
 
+my $_scrub_hash = sub {
+   my ($params, $opts) = @_;
+
+   my $hash = $_get_defined_value->( $params, -1, $opts );
+   my @keys = keys %{ $hash };
+
+   for my $k (@keys) {
+      my $v = delete $hash->{ $k };
+
+      $hash->{ $_scrub_value->( 'key', $k, $opts ) }
+         = (is_arrayref $v)
+         ? [ map { $_scrub_value->( $k, $_, $opts ) } @{ $v } ]
+         : $_scrub_value->( $k, $v, $opts );
+   }
+
+   return $hash;
+};
+
 my $_get_scrubbed_param = sub {
    my ($self, $params, $name, $opts) = @_; $opts = { %{ $opts // {} } };
 
    $opts->{max_length} //= $self->_config->max_asset_size;
    $opts->{scrubber  } //= $self->_config->scrubber;
+   $opts->{hashref   } and return $_scrub_hash->( $params, $opts );
    $opts->{multiple  } and return
       [ map { $opts->{raw} ? $_ : $_scrub_value->( $name, $_, $opts ) }
            @{ $_get_defined_values->( $params, $name, $opts ) } ];
@@ -227,7 +248,11 @@ sub body_params {
 
    my $params = $self->body->param; weaken( $params );
 
-   return sub { $_get_scrubbed_param->( $self, $params, @_ ) };
+   return sub {
+      return $_get_scrubbed_param->
+         ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
+           ? @_ : (-1, { %{ $_[ 0 ] // {} }, hashref => TRUE }) );
+   };
 }
 
 sub query_params {
@@ -235,7 +260,11 @@ sub query_params {
 
    my $params = $self->_params; weaken( $params );
 
-   return sub { $_get_scrubbed_param->( $self, $params, @_ ) };
+   return sub {
+      return $_get_scrubbed_param->
+         ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
+           ? @_ : (-1, { %{ $_[ 0 ] // {} }, hashref => TRUE }) );
+   };
 }
 
 sub uri_for {
@@ -259,7 +288,8 @@ sub uri_params {
 
    return sub {
       return $_get_scrubbed_param->
-         ( $self, $params, (defined $_[ 0 ]) ? @_ : (-1, { multiple => TRUE }));
+         ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
+           ? @_ : (-1, { %{ $_[ 0 ] // {} }, multiple => TRUE }) );
    };
 }
 

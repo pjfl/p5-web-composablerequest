@@ -160,14 +160,14 @@ sub decode_array ($$) {
 }
 
 sub decode_hash ($$) {
-   my ($enc, $param) = @_;
+   my ($enc, $param) = @_; my @keys = keys %{ $param };
 
-   for my $k (keys %{ $param }) {
-      if (is_arrayref( $param->{ $k } )) {
-         $param->{ decode( $enc, $k ) }
-            = [ map { decode( $enc, $_ ) } @{ $param->{ $k } } ];
-      }
-      else { $param->{ decode( $enc, $k ) } = decode( $enc, $param->{ $k } ) }
+   for my $k (@keys) {
+      my $v = delete $param->{ $k };
+
+      $param->{ decode( $enc, $k ) }
+         = is_arrayref( $v ) ? [ map { decode( $enc, $_ ) } @{ $v } ]
+                             :         decode( $enc, $v );
    }
 
    return;

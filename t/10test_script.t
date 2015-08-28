@@ -23,7 +23,7 @@ is blessed( $factory ), 'Web::ComposableRequest', 'Factory right class';
 
 my $session = { authenticated => 1 };
 my $args    = 'arg1/arg2/arg-3';
-my $query   = { key => '123-4' };
+my $query   = { _method => 'update', key => '123-4', };
 my $cookie  = 'my_app_cookie1=key1%7Eval1%2Bkey2%7Eval2; '
             . 'my_app_cookie2=key3%7Eval3%2Bkey4%7Eval4';
 my $input   = '{ "_method": "delete", "key": "value-1" }';
@@ -41,7 +41,7 @@ my $env     = {
    'psgix.logger'       => sub { warn $_[ 0 ]->{message}."\n" },
    'psgix.session'      => $session,
 };
-my $req     = $factory->new_from_simple_request( {}, $args, $query, $env );
+my $req = $factory->new_from_simple_request( {}, $args, $query, $env );
 
 is $req->_config->encoding, 'UTF-8', 'Default encoding';
 is $req->_config->max_asset_size, 4_194_304, 'Default max asset size';
@@ -58,14 +58,22 @@ is $req->query, '?key=124-4', 'Request query';
 is $req->remote_host, q(), 'Remote host';
 is $req->uri, 'http://localhost:5000/api', 'Builds URI';
 is $req->has_upload, q(), 'Upload predicate false';
-is $req->query_params->( 'key' ), 1234, 'Query params scrubs unwanted chars';
-is $req->query_params->( 'key', { raw => 1 } ), '123-4', 'Query params raw val';
-is $req->uri_params->( 2 ), 'arg3', 'URI params scrubs unwanted chars';
-is $req->uri_params->( 2, { raw => 1 } ), 'arg-3', 'URI params raw value';
-is join( '/', @{ $req->uri_params->( -1, { multiple => 1, raw => 1 } )}), $args,
-   'URI params all args';
 is $req->body_params->( 'key' ), 'value1', 'Body params scrubs unwanted chars';
 is $req->body_params->( 'key', { raw => 1 } ), 'value-1', 'Body params raw val';
+is join( '/', sort keys   %{ $req->body_params->() } ), '_method/key',
+   'Body params as hashref - keys';
+is join( '/', sort values %{ $req->body_params->() } ), 'delete/value1',
+   'Body params as hashref - values';
+is $req->query_params->( 'key' ), 1234, 'Query params scrubs unwanted chars';
+is $req->query_params->( 'key', { raw => 1 } ), '123-4', 'Query params raw val';
+is join( '/', sort keys   %{ $req->query_params->() } ), '_method/key',
+   'Query params as hashref - keys';
+is join( '/', sort values %{ $req->query_params->() } ), '1234/update',
+   'Query params as hashref - values';
+is $req->uri_params->( 2 ), 'arg3', 'URI params scrubs unwanted chars';
+is $req->uri_params->( 2, { raw => 1 } ), 'arg-3', 'URI params raw value';
+is join( '/', @{ $req->uri_params->( { raw => 1 } ) } ), $args,
+   'URI params all args - raw';
 is $req->tunnel_method, 'delete', 'Tunnel method from body params';
 is $req->uri_for, 'http://localhost:5000/', 'Default uri_for';
 is $req->loc( 'One [_1] Three', [ 'Two' ] ), "One 'Two' Three", 'Localises';
