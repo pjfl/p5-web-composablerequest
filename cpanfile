@@ -15,17 +15,19 @@ requires "perl" => "5.010001";
 requires "strictures" => "2.000000";
 
 on 'build' => sub {
-  requires "IO::String" => "1.08";
   requires "Module::Build" => "0.4004";
-  requires "Test::Requires" => "0.06";
-  requires "Unexpected" => "v0.38.0";
   requires "version" => "0.88";
 };
 
 on 'test' => sub {
   requires "File::Spec" => "0";
+  requires "IO::String" => "1.08";
+  requires "Module::Build" => "0.4004";
   requires "Module::Metadata" => "0";
   requires "Sys::Hostname" => "0";
+  requires "Test::Requires" => "0.06";
+  requires "Unexpected" => "v0.38.0";
+  requires "version" => "0.88";
 };
 
 on 'test' => sub {

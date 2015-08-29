@@ -198,16 +198,10 @@ Defines the following configuration attributes
 
 =over 3
 
-=item C<gettext>
+=item C<l10n_attributes>
 
-A code reference. Defaults to one which returns it's first argument. The first
-argument is the lookup key, the second argument is a hash reference of
-options
-
-=item C<l10n_domain>
-
-A non empty simple string which defaults to F<messages>. The default message
-catalogue
+A hash reference. The C<domains> attribute is an array reference containing
+the default gettext domains
 
 =item C<locale>
 
@@ -233,9 +227,7 @@ substitutions to be quoted
 
    $localised_string = $self->loc( $key, @args );
 
-Translates C<$key> into the required language and substitutes the bind values.
-The C<locale> is currently set in configuration but will be extracted from
-the request in a future release
+Translates C<$key> into the required language and substitutes the bind values
 
 =head2 C<loc_default>
 

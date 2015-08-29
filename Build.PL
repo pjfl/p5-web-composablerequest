@@ -7,10 +7,7 @@ my $perl_ver = 5.010001;
 my $name     = 'Web-ComposableRequest'; $name =~ s{ - }{::}gmx;
 my $prereqs  = {
   'build_requires' => {
-    'IO::String' => '1.08',
     'Module::Build' => '0.4004',
-    'Test::Requires' => '0.06',
-    'Unexpected' => 'v0.38.0',
     'version' => '0.88'
   },
   'configure_requires' => {
@@ -36,8 +33,13 @@ my $prereqs  = {
   },
   'test_requires' => {
     'File::Spec' => '0',
+    'IO::String' => '1.08',
+    'Module::Build' => '0.4004',
     'Module::Metadata' => '0',
-    'Sys::Hostname' => '0'
+    'Sys::Hostname' => '0',
+    'Test::Requires' => '0.06',
+    'Unexpected' => 'v0.38.0',
+    'version' => '0.88'
   },
 };
 my $testing  = sub { $ENV{AUTOMATED_TESTING}

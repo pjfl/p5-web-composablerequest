@@ -21,8 +21,6 @@ BEGIN {
 
    if ($notes->{testing}) {
       $Bin =~ m{ : .+ : }mx and plan skip_all => 'Two colons in $Bin path';
-      # TODO: Remove this when service is restored
-      plan skip_all => 'CPAN Testing down Aug 2015';
    }
 }
 
