@@ -4,12 +4,12 @@ use namespace::autoclean;
 
 use CGI::Simple::Cookie;
 use Unexpected::Types            qw( HashRef );
-use Web::ComposableRequest::Util qw( request_config_roles );
+use Web::ComposableRequest::Util qw( add_config_role );
 use Moo::Role;
 
 requires qw( _config _env );
 
-request_config_roles __PACKAGE__.'::Config';
+add_config_role __PACKAGE__.'::Config';
 
 my $_decode = sub {
    my ($cookies, $prefix, $name) = @_; my $cname = "${prefix}_${name}";

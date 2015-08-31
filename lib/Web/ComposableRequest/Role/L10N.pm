@@ -4,7 +4,7 @@ use namespace::autoclean;
 
 use Web::ComposableRequest::Constants qw( NUL TRUE );
 use Web::ComposableRequest::Util      qw( extract_lang is_member
-                                          request_config_roles );
+                                          add_config_role );
 use Unexpected::Functions             qw( inflate_placeholders );
 use Unexpected::Types                 qw( ArrayRef CodeRef NonEmptySimpleStr
                                           Undef );
@@ -12,7 +12,7 @@ use Moo::Role;
 
 requires qw( query_params _config _env );
 
-request_config_roles __PACKAGE__.'::Config';
+add_config_role __PACKAGE__.'::Config';
 
 # Attribute constructors
 my $_build_locale = sub {

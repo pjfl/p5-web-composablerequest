@@ -4,13 +4,13 @@ use namespace::autoclean;
 
 use Digest::MD5                  qw( md5_hex );
 use Subclass::Of;
-use Web::ComposableRequest::Util qw( request_config_roles );
+use Web::ComposableRequest::Util qw( add_config_role );
 use Unexpected::Types            qw( LoadableClass Object );
 use Moo::Role;
 
 requires qw( loc loc_default query_params _config _env _log );
 
-request_config_roles __PACKAGE__.'::Config';
+add_config_role __PACKAGE__.'::Config';
 
 my $class_stash = {};
 

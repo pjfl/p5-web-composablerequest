@@ -14,10 +14,11 @@ use URI::http;
 use URI::https;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS LANG );
 
-our @EXPORT_OK  = qw( base64_decode_ns base64_encode_ns bson64id bson64id_time
-                      decode_array decode_hash extract_lang first_char
-                      is_arrayref is_hashref is_member merge_attributes new_uri
-                      request_config_roles trim thread_id throw uri_escape );
+our @EXPORT_OK  = qw( add_config_role base64_decode_ns base64_encode_ns bson64id
+                      bson64id_time decode_array decode_hash extract_lang
+                      first_char is_arrayref is_hashref is_member
+                      list_config_roles merge_attributes new_uri trim thread_id
+                      throw uri_escape );
 
 my $bson_id_count  = 0;
 my $bson_prev_time = 0;
@@ -74,6 +75,10 @@ my $_bson_id = sub {
 };
 
 # Exported functions
+sub add_config_role ($) {
+   my $role = shift; return push @config_roles, $role;
+}
+
 sub base64_decode_ns ($) {
    my $x = shift; defined $x or return; my @x = split q(), $x;
 
@@ -197,6 +202,10 @@ sub is_member (;@) {
    return (first { $_ eq $candidate } @args) ? 1 : 0;
 }
 
+sub list_config_roles () {
+   return @config_roles;
+}
+
 sub merge_attributes ($$$;$) {
    my ($dest, $src, $defaults, $attrs) = @_; my $class = blessed $src;
 
@@ -212,12 +221,6 @@ sub merge_attributes ($$$;$) {
 
 sub new_uri ($$) {
    return bless uric_escape( $_[ 0 ] ), 'URI::'.$_[ 1 ];
-}
-
-sub request_config_roles (;$) {
-   my $role = shift; $role or return @config_roles;
-
-   return push @config_roles, $role;
 }
 
 sub thread_id () {
@@ -267,6 +270,13 @@ Functions used in this distribution
 Defines no attributes
 
 =head1 Subroutines/Methods
+
+=head2 C<add_config_role>
+
+   add_config_role $config_role_name;
+
+The supplied configuration role name is pushed onto a class attribute list. See
+L</list_config_roles>
 
 =head2 C<base64_decode_ns>
 
@@ -339,6 +349,13 @@ Tests to see if the scalar variable is a hash ref
 Tests to see if the first parameter is present in the list of
 remaining parameters
 
+=head2 C<list_config_roles>
+
+   @list_of_role_names = list_config_roles;
+
+Returns the list of configuration role names stored in the class attribute.
+See L</add_config_role>
+
 =head2 merge_attributes
 
    $dest = merge_attributes $dest, $src, $defaults, $attr_list_ref;
@@ -353,14 +370,6 @@ may be an object in which case its accessor methods are called
    $uri_object_ref = new_uri $uri_path, $scheme;
 
 Return a new L</URI> object reference
-
-=head2 C<request_config_roles>
-
-   @list_of_role_names = request_config_roles $request_role_name;
-
-If supplied the role name is pushed onto a class attribute list. When called
-without a role name the list of role names stored in the class attribute are
-returned
 
 =head2 C<thread_id>
 

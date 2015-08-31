@@ -2,14 +2,14 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.3.%d', q$Rev: 4 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.3.%d', q$Rev: 5 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
 use Web::ComposableRequest::Config;
 use Web::ComposableRequest::Constants qw( NUL );
-use Web::ComposableRequest::Util      qw( is_hashref merge_attributes
-                                          request_config_roles trim );
+use Web::ComposableRequest::Util      qw( is_hashref list_config_roles
+                                          merge_attributes trim );
 use Unexpected::Types                 qw( CodeRef HashRef NonEmptySimpleStr
                                           Object Undef );
 use Moo::Role ();
@@ -22,7 +22,7 @@ my $_build_config = sub {
 
 my $_build_config_class = sub {
    my $base  = __PACKAGE__.'::Config';
-   my @roles = request_config_roles; @roles > 0 or return $base;
+   my @roles = list_config_roles; @roles > 0 or return $base;
 
    return Moo::Role->create_class_with_roles( $base, @roles );
 };
