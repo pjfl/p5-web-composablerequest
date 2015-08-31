@@ -17,15 +17,23 @@ request_config_roles __PACKAGE__.'::Config';
 # Attribute constructors
 my $_build_locale = sub {
    my $self   = shift;
+   my $conf   = $self->_config;
    my $locale = $self->query_params->( 'locale', { optional => TRUE } );
 
-   $locale and is_member $locale, $self->_config->locales and return $locale;
+   $locale and is_member $locale, $conf->locales and return $locale;
 
-   for (@{ $self->locales }) {
-      is_member $_, $self->_config->locales and return $_;
+   my $lang; $locale and $lang = extract_lang( $locale )
+      and $lang ne $locale and is_member $lang, $conf->locales and return $lang;
+
+   for my $locale (@{ $self->locales }) {
+      is_member $locale, $conf->locales and return $locale;
    }
 
-   return $self->_config->locale;
+   for my $lang (map { extract_lang $_ } @{ $self->locales }) {
+      is_member $lang, $conf->locales and return $lang;
+   }
+
+   return $conf->locale;
 };
 
 my $_build_locales = sub {
@@ -201,7 +209,7 @@ Defines the following configuration attributes
 =item C<l10n_attributes>
 
 A hash reference. The C<domains> attribute is an array reference containing
-the default gettext domains
+the default C<gettext> domains
 
 =item C<locale>
 
