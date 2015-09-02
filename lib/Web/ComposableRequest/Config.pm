@@ -56,7 +56,7 @@ Web::ComposableRequest::Config - Base class for the request configuration
 
    my $_build_config_class = sub {
       my $base  = __PACKAGE__.'::Config';
-      my @roles = request_config_roles; @roles > 0 or return $base;
+      my @roles = list_config_roles; @roles > 0 or return $base;
 
       return Moo::Role->create_class_with_roles( $base, @roles );
    };

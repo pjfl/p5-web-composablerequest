@@ -3,13 +3,13 @@ requires "Class::Inspector" => "1.28";
 requires "Exporter::Tiny" => "0.042";
 requires "HTTP::Body" => "1.22";
 requires "HTTP::Message" => "6.06";
-requires "JSON::MaybeXS" => "1.003005";
+requires "JSON::MaybeXS" => "1.003";
 requires "Moo" => "2.000001";
 requires "Role::Tiny" => "2.000001";
 requires "Subclass::Of" => "0.003";
 requires "Try::Tiny" => "0.22";
 requires "URI" => "1.67";
-requires "Unexpected" => "v0.38.0";
+requires "Unexpected" => "v0.39.0";
 requires "namespace::autoclean" => "0.26";
 requires "perl" => "5.010001";
 requires "strictures" => "2.000000";
@@ -26,7 +26,7 @@ on 'test' => sub {
   requires "Module::Metadata" => "0";
   requires "Sys::Hostname" => "0";
   requires "Test::Requires" => "0.06";
-  requires "Unexpected" => "v0.38.0";
+  requires "Unexpected" => "v0.39.0";
   requires "version" => "0.88";
 };
 

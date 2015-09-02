@@ -20,13 +20,13 @@ my $prereqs  = {
     'Exporter::Tiny' => '0.042',
     'HTTP::Body' => '1.22',
     'HTTP::Message' => '6.06',
-    'JSON::MaybeXS' => '1.003005',
+    'JSON::MaybeXS' => '1.003',
     'Moo' => '2.000001',
     'Role::Tiny' => '2.000001',
     'Subclass::Of' => '0.003',
     'Try::Tiny' => '0.22',
     'URI' => '1.67',
-    'Unexpected' => 'v0.38.0',
+    'Unexpected' => 'v0.39.0',
     'namespace::autoclean' => '0.26',
     'perl' => '5.010001',
     'strictures' => '2.000000'
@@ -38,7 +38,7 @@ my $prereqs  = {
     'Module::Metadata' => '0',
     'Sys::Hostname' => '0',
     'Test::Requires' => '0.06',
-    'Unexpected' => 'v0.38.0',
+    'Unexpected' => 'v0.39.0',
     'version' => '0.88'
   },
 };
@@ -49,7 +49,8 @@ my $whimper  = sub { print {*STDOUT} $_[ 0 ]."\n"; exit 0 };
 my $stop     = sub {
    $testing->() or $whimper->( $_[ 0 ] );
    $prereqs->{build_requires} = { %{ $prereqs->{configure_requires} } };
-   $prereqs->{build_requires}->{ 'Test::Requires' } = 0.06;
+   $prereqs->{test_requires } = { %{ $prereqs->{configure_requires} } };
+   $prereqs->{test_requires }->{ 'Test::Requires' } = 0.06;
    delete $prereqs->{requires};
 };
 
