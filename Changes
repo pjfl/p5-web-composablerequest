@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.4.1     2015-09-05 11:42:51
           - Toolchain update
           - Split request_config_roles into add_ and list_ config roles
           - Enhanced L10N locale attribute builder

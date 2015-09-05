@@ -71,7 +71,7 @@ sub add_status_message {
 
    is_arrayref $msg or throw 'Parameter [_1] not an array reference', [ $msg ];
 
-   my $mid = bson64id; $self->messages->{ $mid } = $msg;
+   $self->messages->{ my $mid = bson64id } = $msg;
 
    return $mid;
 }

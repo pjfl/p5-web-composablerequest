@@ -26,7 +26,7 @@ my $prereqs  = {
     'Subclass::Of' => '0.003',
     'Try::Tiny' => '0.22',
     'URI' => '1.67',
-    'Unexpected' => 'v0.39.0',
+    'Unexpected' => 'v0.40.0',
     'namespace::autoclean' => '0.26',
     'perl' => '5.010001',
     'strictures' => '2.000000'
@@ -38,7 +38,6 @@ my $prereqs  = {
     'Module::Metadata' => '0',
     'Sys::Hostname' => '0',
     'Test::Requires' => '0.06',
-    'Unexpected' => 'v0.39.0',
     'version' => '0.88'
   },
 };
