@@ -3,11 +3,12 @@ package Web::ComposableRequest::Util;
 use strictures;
 use parent 'Exporter::Tiny';
 
-use Digest::MD5   qw( md5 );
+use Digest::MD5   qw( md5 md5_hex );
 use Encode        qw( decode );
 use English       qw( -no_match_vars );
 use List::Util    qw( first );
 use Scalar::Util  qw( blessed );
+use Subclass::Of;
 use Sys::Hostname qw( hostname );
 use URI::Escape   qw( );
 use URI::http;
@@ -15,13 +16,14 @@ use URI::https;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS LANG );
 
 our @EXPORT_OK  = qw( add_config_role base64_decode_ns base64_encode_ns bson64id
-                      bson64id_time decode_array decode_hash extract_lang
-                      first_char is_arrayref is_hashref is_member
+                      bson64id_time compose_class decode_array decode_hash
+                      extract_lang first_char is_arrayref is_hashref is_member
                       list_config_roles merge_attributes new_uri trim thread_id
                       throw uri_escape );
 
 my $bson_id_count  = 0;
 my $bson_prev_time = 0;
+my $class_stash    = {};
 my @config_roles   = ();
 my $host_id        = substr md5( hostname ), 0, 3;
 my $reserved       = q(;/?:@&=+$,[]);
@@ -150,6 +152,29 @@ sub bson64id (;$) {
 
 sub bson64id_time ($) {
    return unpack 'N', substr base64_decode_ns( $_[ 0 ] ), 2, 4;
+}
+
+sub compose_class ($$;@) {
+   my ($base, $params, %options) = @_;
+
+   my @params = keys %{ $params // {} }; @params > 0 or return $base;
+
+   my $class = "${base}::".(substr md5_hex( join q(), @params ), 0, 8);
+
+   exists $class_stash->{ $class } and return $class_stash->{ $class };
+
+   my $is = $options{is} // 'ro'; my @attrs;
+
+   for my $name (@params) {
+      my ($type, $default) = @{ $params->{ $name } };
+      my $props            = [ is => $is, isa => $type ];
+
+      defined $default and push @{ $props }, 'default', $default;
+      push @attrs, $name, $props;
+   }
+
+   return $class_stash->{ $class } = subclass_of
+      ( $base, -package => $class, -has => [ @attrs ] );
 }
 
 sub decode_array ($$) {
@@ -304,6 +329,12 @@ for data streams like message queues and file feeds
    $seconds_elapsed_since_the_epoch = bson64id_time $bson64_id;
 
 Returns the time the L</bson64id> id was generated as Unix time
+
+=head2 C<compose_class>
+
+   $class_name = compose_class $base, $attributes, %options;
+
+Compose a class from the base and attributes
 
 =head2 C<decode_array>
 

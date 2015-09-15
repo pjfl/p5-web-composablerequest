@@ -2,43 +2,13 @@ package Web::ComposableRequest::Role::Session;
 
 use namespace::autoclean;
 
-use Digest::MD5                  qw( md5_hex );
-use Subclass::Of;
-use Web::ComposableRequest::Util qw( add_config_role );
+use Web::ComposableRequest::Util qw( add_config_role compose_class );
 use Unexpected::Types            qw( LoadableClass Object );
 use Moo::Role;
 
 requires qw( loc loc_default query_params _config _env _log );
 
 add_config_role __PACKAGE__.'::Config';
-
-my $class_stash = {};
-
-my $_build_session_class = sub {
-   my $self         = shift;
-   my $base         = $self->_config->session_class;
-   my $session_attr = $self->_config->session_attr;
-   my @session_attr = keys %{ $session_attr };
-
-   @session_attr > 0 or return $base;
-
-   my $class = "${base}::".(substr md5_hex( join q(), @session_attr ), 0, 8);
-
-   exists $class_stash->{ $class } and return $class_stash->{ $class };
-
-   my @attrs;
-
-   for my $name (@session_attr) {
-      my ($type, $default) = @{ $session_attr->{ $name } };
-      my $props            = [ is => 'rw', isa => $type ];
-
-      defined $default and push @{ $props }, 'default', $default;
-      push @attrs, $name, $props;
-   }
-
-   return $class_stash->{ $class } = subclass_of
-      ( $base, -package => $class, -has => [ @attrs ] );
-};
 
 has 'session'       => is => 'lazy', isa => Object, builder => sub {
    return $_[ 0 ]->session_class->new
@@ -47,8 +17,9 @@ has 'session'       => is => 'lazy', isa => Object, builder => sub {
         session     => $_[ 0 ]->_env->{ 'psgix.session' }, ) },
    handles          => [ 'authenticated', 'username' ];
 
-has 'session_class' => is => 'lazy', isa => LoadableClass,
-   builder          => $_build_session_class;
+has 'session_class' => is => 'lazy', isa => LoadableClass, builder => sub {
+   my $conf = $_[ 0 ]->_config;
+   compose_class( $conf->session_class, $conf->session_attr, is => 'rw' ) };
 
 package Web::ComposableRequest::Role::Session::Config;
 

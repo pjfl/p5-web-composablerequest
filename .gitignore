@@ -22,3 +22,5 @@ README.pod
 t/ipc_srlock*
 *.tar.gz
 Web-ComposableRequest-*
+lib/Web/ComposableRequest/Exception
+lib/Web/ComposableRequest/Role/Authen
