@@ -83,7 +83,10 @@ has 'path'           => is => 'lazy', isa => SimpleStr, builder => sub {
 has 'port'           => is => 'lazy', isa => NonZeroPositiveInt,
    builder           => sub { $_[ 0 ]->_env->{ 'SERVER_PORT' } // 80 };
 
-has 'query'          => is => 'lazy', isa => SimpleStr, builder => sub {
+has 'protocol'       => is => 'lazy', isa => NonEmptySimpleStr,
+   builder           => sub { $_[ 0 ]->_env->{ 'SERVER_PROTOCOL' } };
+
+has 'query'          => is => 'lazy', isa => Str, builder => sub {
    my $v             =  $_[ 0 ]->_env->{ 'QUERY_STRING' }; $v ? "?${v}" : NUL };
 
 has 'remote_host'    => is => 'lazy', isa => SimpleStr,
@@ -103,7 +106,7 @@ has 'upload'         => is => 'lazy', isa => Object | Undef,
    predicate         => TRUE;
 
 has 'uri'            => is => 'lazy', isa => Object, builder => sub {
-   new_uri $_[ 0 ]->_base.$_[ 0 ]->path, $_[ 0 ]->scheme };
+   new_uri $_[ 0 ]->_base.$_[ 0 ]->path.$_[ 0 ]->query, $_[ 0 ]->scheme };
 
 # Private attributes
 has '_args'    => is => 'ro',   isa => ArrayRef,
@@ -385,6 +388,10 @@ C<mount_point> configuration attribute
 =item C<port>
 
 A non zero positive integer that default to 80. The default server port
+
+=item C<protocol>
+
+A non empty simple string. The protocol used by the request e.g. C<HTTP/2.0>
 
 =item C<query>
 

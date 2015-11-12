@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Appended query to uri. Was there originally
+          - Added protocol attribute
           - Toolchain update
           - Created Utils compose_class
 
