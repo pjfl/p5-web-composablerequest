@@ -56,7 +56,7 @@ is $req->port, 80, 'Default port';
 is $req->method, 'post', 'Request method';
 is $req->query, '?key=124-4', 'Request query';
 is $req->remote_host, q(), 'Remote host';
-is $req->uri, 'http://localhost:5000/api', 'Builds URI';
+is $req->uri, 'http://localhost:5000/api?key=124-4', 'Builds URI';
 is $req->has_upload, q(), 'Upload predicate false';
 is $req->body_params->( 'key' ), 'value1', 'Body params scrubs unwanted chars';
 is $req->body_params->( 'key', { raw => 1 } ), 'value-1', 'Body params raw val';
