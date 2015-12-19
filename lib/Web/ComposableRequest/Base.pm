@@ -39,7 +39,11 @@ my $_build__content = sub {
    my $cl = $self->content_length  or return NUL;
    my $fh = $env->{ 'psgi.input' } or return NUL;
 
-   try   { $fh->seek( 0, 0 ); $fh->read( $content, $cl, 0 ); $fh->seek( 0, 0 ) }
+   try {
+      $fh->can( 'seek' ) and $fh->seek( 0, 0 );
+      $fh->read( $content, $cl, 0 );
+      $fh->can( 'seek' ) and $fh->seek( 0, 0 );
+   }
    catch { $log->( { level => 'error', message => $_ } ); $content = NUL };
 
    return $content || NUL;
