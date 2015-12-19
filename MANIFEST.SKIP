@@ -62,5 +62,5 @@ Thumbs.db
 
 # Avoid archives of this distribution
 \bWeb-ComposableRequest-v?[\d\.\_]+
-lib/Web/ComposableRequest/Exception
+lib/Web/ComposableRequest/Exception/Authen
 lib/Web/ComposableRequest/Role/Authen
