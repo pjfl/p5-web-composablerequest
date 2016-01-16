@@ -37,6 +37,7 @@ my $env     = {
    QUERY_STRING         => 'key=124-4',
    REMOTE_ADDR          => '127.0.0.1',
    REQUEST_METHOD       => 'POST',
+   SERVER_PROTOCOL      => 'HTTP/1.1',
    'psgi.input'         => IO::String->new( $input ),
    'psgix.logger'       => sub { warn $_[ 0 ]->{message}."\n" },
    'psgix.session'      => $session,
@@ -55,6 +56,7 @@ is $req->host, 'localhost', 'Client host';
 is $req->port, 80, 'Default port';
 is $req->method, 'post', 'Request method';
 is $req->query, '?key=124-4', 'Request query';
+is $req->protocol, 'HTTP/1.1', 'Protocol';
 is $req->remote_host, q(), 'Remote host';
 is $req->uri, 'http://localhost:5000/api?key=124-4', 'Builds URI';
 is $req->has_upload, q(), 'Upload predicate false';

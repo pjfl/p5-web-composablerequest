@@ -28,25 +28,31 @@ my $_build_body = sub {
    $body->cleanup( TRUE ); $len or return $body;
 
    try   { $self->_decode_body( $body, $content ) }
-   catch { $self->_log->( { level => 'error', message => $_ } ) };
+   catch {
+      # uncoverable statement
+      $self->_log->( { level => 'error', message => $_ } );
+   };
 
    return $body;
 };
 
 my $_build__content = sub {
-   my $self = shift; my $env = $self->_env; my $log = $self->_log; my $content;
-
-   my $cl = $self->content_length  or return NUL;
-   my $fh = $env->{ 'psgi.input' } or return NUL;
+   my $self    = shift;
+   my $cl      = $self->content_length  or return NUL;
+   my $fh      = $self->_env->{ 'psgi.input' } or return NUL;
+   my $content = NUL;
 
    try {
       $fh->can( 'seek' ) and $fh->seek( 0, 0 );
       $fh->read( $content, $cl, 0 );
       $fh->can( 'seek' ) and $fh->seek( 0, 0 );
    }
-   catch { $log->( { level => 'error', message => $_ } ); $content = NUL };
+   catch {
+      # uncoverable statement
+      $self->_log->( { level => 'error', message => $_ } );
+   };
 
-   return $content || NUL;
+   return $content;
 };
 
 my $_build_tunnel_method = sub {

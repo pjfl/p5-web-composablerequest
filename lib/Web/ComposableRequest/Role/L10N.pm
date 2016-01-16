@@ -102,7 +102,7 @@ my $_get_domains = sub {
    my $domain  = $self->domain or return $domains;
    my $prefix  = $self->domain_prefix;
 
-   $prefix and $domain = "${prefix}_${domain}"; push @{ $domains }, $domain;
+   $prefix and $domain = "${prefix}-${domain}"; push @{ $domains }, $domain;
 
    return $domains;
 };
