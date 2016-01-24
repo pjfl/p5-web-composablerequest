@@ -160,6 +160,29 @@ eval { Web::ComposableRequest::Constants->Exception_Class( 'Scalar::Util' ) };
 
 like $EVAL_ERROR, qr{ \Qno throw method\E}mx, 'Invalid exception class';
 
+use Web::ComposableRequest::Util qw( throw );
+
+eval { throw 'Error' };
+
+like $EVAL_ERROR, qr{ Error }mx, 'Throws';
+
+$config  = {
+   max_sess_time => 1,
+   prefix        => 'my_app',
+   request_roles => [ 'L10N', 'Session', 'Cookie', 'JSON', 'Static' ],
+   scrubber      => '[^_~+0-9A-Za-z]' };
+$query   = {};
+$factory = Web::ComposableRequest->new( config => $config );
+$req     = $factory->new_from_simple_request( {}, $args, $query, $env );
+
+is blessed( $req->session ), 'Web::ComposableRequest::Session',
+   'Session without attributes';
+
+is $req->uri_for( 'test', [ 'dummy' ] ), 'http://localhost:5000/test/dummy',
+   'Uri for with args';
+is $req->uri_for( 'test', { uri_params => [ 'dummy' ] } ),
+   'http://localhost:5000/test/dummy', 'Uri for with hash';
+
 done_testing;
 
 # Local Variables:
