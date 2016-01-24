@@ -2,7 +2,7 @@ package Web::ComposableRequest::Role::Static;
 
 use namespace::autoclean;
 
-use Web::ComposableRequest::Constants qw( NUL TRUE );
+use Web::ComposableRequest::Constants qw( FALSE NUL TRUE );
 use Web::ComposableRequest::Util      qw( first_char is_arrayref
                                           is_hashref new_uri );
 use Moo::Role;
@@ -12,7 +12,9 @@ requires qw( locale path query_params scheme _base );
 around '_build__base' => sub {
    my ($orig, $self) = @_; $self->mode eq 'static' or return $orig->( $self );
 
-   my $count = () = split m{ / }mx, $self->path, -1; return '../' x $count;
+   my $count = () = split m{ / }mx, $self->path, -1;
+
+   return '../' x $count;
 };
 
 around '_build_uri' => sub {
@@ -29,7 +31,9 @@ around 'uri_for' => sub {
    ($self->mode eq 'static' and '/' ne substr $path, -1, 1)
       or return $orig->( $self, $path, @args );
 
-   my $uri_params = []; my @query_params = (); my $extn = '.html';
+   my $base = $self->_base; my $extn = '.html';
+
+   my @query_params = (); my $uri_params = [];
 
    if (is_arrayref $args[ 0 ]) {
       $uri_params = shift @args; @query_params = @args;
@@ -37,16 +41,15 @@ around 'uri_for' => sub {
    elsif (is_hashref $args[ 0 ]) {
       $uri_params   =    $args[ 0 ]->{uri_params  } // [];
       @query_params = @{ $args[ 0 ]->{query_params} // [] };
+      $args[ 0 ]->{base     } and $base = $args[ 0 ]->{base     };
       $args[ 0 ]->{extension} and $extn = $args[ 0 ]->{extension};
    }
 
-   $path or $path = 'index';
+   $path or $path = 'index'; $path = $base.$self->locale."/${path}";
 
    $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
 
-   $path = $self->_base.$self->locale."/${path}${extn}";
-
-   my $uri = new_uri $path, $self->scheme;
+   my $uri = new_uri $path.$extn, $self->scheme;
 
    $query_params[ 0 ] and $uri->query_form( @query_params );
 

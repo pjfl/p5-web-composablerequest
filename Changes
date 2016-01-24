@@ -1,7 +1,8 @@
 Revision history for Web::ComposableRequest
 
+          - Can set the base when generating URIs
           - Added new signature to uri_for
-          - Can set extension when generating static URLs
+          - Can set extension when generating static URIs
           - Improved test coverage
 
 0.6.1     2015-12-19 12:10:53

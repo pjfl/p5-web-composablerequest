@@ -283,7 +283,7 @@ sub query_params {
 sub uri_for {
    my ($self, $path, @args) = @_; $path //= NUL;
 
-   my $uri_params = []; my @query_params = ();
+   my $base = $self->_base; my @query_params = (); my $uri_params = [];
 
    if (is_arrayref $args[ 0 ]) {
       $uri_params = shift @args; @query_params = @args;
@@ -291,11 +291,12 @@ sub uri_for {
    elsif (is_hashref $args[ 0 ]) {
       $uri_params   =    $args[ 0 ]->{uri_params  } // [];
       @query_params = @{ $args[ 0 ]->{query_params} // [] };
+      $args[ 0 ]->{base} and $base = $args[ 0 ]->{base};
    }
 
-   $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
+   first_char $path ne '/' and $path = $base.$path;
 
-   first_char $path ne '/' and $path = $self->_base.$path;
+   $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
 
    my $uri = new_uri $path, $self->scheme;
 
