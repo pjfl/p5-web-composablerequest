@@ -118,8 +118,9 @@ like $req->session->collect_status_message( $req ),
    qr{ \Qsession expired\E }mx, 'Session expired';
 
 $req->session->update;
-$query = { locale => 'de', mode => 'static' };
+$query = { locale => 'ru', mode => 'static' };
 $env   = { HTTP_HOST       => 'localhost:5000',
+           HTTP_ACCEPT_LANGUAGE => 'sw',
            PATH_INFO       => '/api',
            'psgix.session' => $session,
            'psgix.logger'  => sub { warn $_[ 0 ]->{message}."\n" },
@@ -131,6 +132,8 @@ is $req->authenticated, 0, 'Session timed out';
 is $req->tunnel_method, 'not_found', 'Tunnel method default';
 is $req->uri, '../en/api.html', 'Builds static URI';
 is $req->uri_for, '../en/index.html', 'Default static uri_for';
+
+is $req->loc( 'One [_1] Three', [ 'Two' ] ), "One 'Two' Three", 'Localises - 1';
 
 $req = $factory->new_from_simple_request( {}, q() );
 
@@ -160,23 +163,31 @@ eval { Web::ComposableRequest::Constants->Exception_Class( 'Scalar::Util' ) };
 
 like $EVAL_ERROR, qr{ \Qno throw method\E}mx, 'Invalid exception class';
 
-use Web::ComposableRequest::Util qw( throw );
+use Web::ComposableRequest::Util
+   qw( base64_decode_ns base64_encode_ns decode_hash throw uri_escape );
 
 eval { throw 'Error' };
 
 like $EVAL_ERROR, qr{ Error }mx, 'Throws';
+
+is base64_encode_ns( 'fred' ), 'Pc9aP0++', 'Base64 encoder';
+is base64_decode_ns( 'Pc9aP0++' ), 'fred', 'Base64 decoder';
+is ${ uri_escape( '>' ) }, '%3E', 'URI escape';
+
+decode_hash( 'UTF-8', my $r = { x => 'a', y => [ 'a', 'b', ], } );
+
+is $r->{x}, 'a', 'Decoded hash';
 
 $config  = {
    max_sess_time => 1,
    prefix        => 'my_app',
    request_roles => [ 'L10N', 'Session', 'Cookie', 'Static' ],
    scrubber      => '[^_~+0-9A-Za-z]' };
-$query   = {};
 $factory = Web::ComposableRequest->new( config => $config );
-my $env     = {
+$query   = {};
+$env     = {
    CONTENT_LENGTH       => length $input,
    CONTENT_TYPE         => 'www-urlencoded/text',
-   HTTP_ACCEPT_LANGUAGE => 'en-gb,en;q=0.7,de;q=0.3',
    HTTP_HOST            => 'localhost:5000',
    PATH_INFO            => '/api',
    REMOTE_ADDR          => '127.0.0.1',

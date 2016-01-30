@@ -253,7 +253,7 @@ sub merge_attributes ($$$;$) {
 }
 
 sub new_uri ($$) {
-   return bless uric_escape( $_[ 1 ] ), 'URI::'.$_[ 0 ];
+   return bless uri_escape( $_[ 1 ] ), 'URI::'.$_[ 0 ];
 }
 
 sub thread_id () {
@@ -270,7 +270,7 @@ sub trim (;$$) {
    chomp $v; $v =~ s{ [$chs]+ \z }{}mx; return $v;
 }
 
-sub uric_escape ($;$) {
+sub uri_escape ($;$) {
    my ($v, $pattern) = @_; $pattern //= $uric;
 
    $v =~ s{([^$pattern])}{ URI::Escape::escape_char($1) }ego;
@@ -432,9 +432,9 @@ Remove leading and trailing whitespace including trailing newlines. Takes
 an additional string used as the character class to remove. Defaults to
 space and tab
 
-=head2 C<uric_escape>
+=head2 C<uri_escape>
 
-   $value_ref = uric_escape $value, $pattern;
+   $value_ref = uri_escape $value, $pattern;
 
 Uses L<URI::Escape/escape_char> to escape any characters in C<$value> that
 match the optional pattern. Returns a reference to the escaped value

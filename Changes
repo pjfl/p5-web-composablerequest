@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Added coverage badge markup
           - Can set the base when generating URIs
           - Added new signature to uri_for
           - Can set extension when generating static URIs
