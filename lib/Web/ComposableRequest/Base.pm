@@ -29,6 +29,7 @@ my $_build_body = sub {
 
    try   { $self->_decode_body( $body, $content ) }
    catch {
+      # uncoverable subroutine
       # uncoverable statement
       $self->_log->( { level => 'error', message => $_ } );
    };
@@ -48,6 +49,7 @@ my $_build__content = sub {
       $fh->can( 'seek' ) and $fh->seek( 0, 0 );
    }
    catch {
+      # uncoverable subroutine
       # uncoverable statement
       $self->_log->( { level => 'error', message => $_ } );
    };
@@ -66,7 +68,7 @@ has 'address'        => is => 'lazy', isa => SimpleStr,
    builder           => sub { $_[ 0 ]->_env->{ 'REMOTE_ADDR' } // NUL };
 
 has 'base'           => is => 'lazy', isa => Object,
-   builder           => sub { new_uri $_[ 0 ]->_base, $_[ 0 ]->scheme },
+   builder           => sub { new_uri $_[ 0 ]->scheme, $_[ 0 ]->_base },
    init_arg          => undef;
 
 has 'body'           => is => 'lazy', isa => Object, builder => $_build_body;
@@ -116,7 +118,7 @@ has 'upload'         => is => 'lazy', isa => Object | Undef,
    predicate         => TRUE;
 
 has 'uri'            => is => 'lazy', isa => Object, builder => sub {
-   new_uri $_[ 0 ]->_base.$_[ 0 ]->path.$_[ 0 ]->query, $_[ 0 ]->scheme };
+   new_uri $_[ 0 ]->scheme, $_[ 0 ]->_base.$_[ 0 ]->path.$_[ 0 ]->query };
 
 # Private attributes
 has '_args'    => is => 'ro',   isa => ArrayRef,
@@ -248,9 +250,9 @@ my $_get_scrubbed_param = sub {
 
 # Private methods
 sub _decode_body {
-   my ($self, $body, $content) = @_; $body->add( $content );
+   my ($self, $body, $content) = @_;
 
-   decode_hash $self->_config->encoding, $body->param;
+   $body->add( $content ); decode_hash $self->_config->encoding, $body->param;
 
    return;
 }
@@ -298,7 +300,7 @@ sub uri_for {
 
    $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
 
-   my $uri = new_uri $path, $self->scheme;
+   my $uri = new_uri $self->scheme, $path;
 
    $query_params[ 0 ] and $uri->query_form( @query_params );
 

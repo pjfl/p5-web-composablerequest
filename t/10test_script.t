@@ -169,10 +169,23 @@ like $EVAL_ERROR, qr{ Error }mx, 'Throws';
 $config  = {
    max_sess_time => 1,
    prefix        => 'my_app',
-   request_roles => [ 'L10N', 'Session', 'Cookie', 'JSON', 'Static' ],
+   request_roles => [ 'L10N', 'Session', 'Cookie', 'Static' ],
    scrubber      => '[^_~+0-9A-Za-z]' };
 $query   = {};
 $factory = Web::ComposableRequest->new( config => $config );
+my $env     = {
+   CONTENT_LENGTH       => length $input,
+   CONTENT_TYPE         => 'www-urlencoded/text',
+   HTTP_ACCEPT_LANGUAGE => 'en-gb,en;q=0.7,de;q=0.3',
+   HTTP_HOST            => 'localhost:5000',
+   PATH_INFO            => '/api',
+   REMOTE_ADDR          => '127.0.0.1',
+   REQUEST_METHOD       => 'POST',
+   SERVER_PROTOCOL      => 'HTTP/1.1',
+   'psgi.input'         => IO::String->new( $input ),
+   'psgix.logger'       => sub { warn $_[ 0 ]->{message}."\n" },
+   'psgix.session'      => $session,
+};
 $req     = $factory->new_from_simple_request( {}, $args, $query, $env );
 
 is blessed( $req->session ), 'Web::ComposableRequest::Session',
@@ -182,6 +195,8 @@ is $req->uri_for( 'test', [ 'dummy' ] ), 'http://localhost:5000/test/dummy',
    'Uri for with args';
 is $req->uri_for( 'test', { uri_params => [ 'dummy' ] } ),
    'http://localhost:5000/test/dummy', 'Uri for with hash';
+
+is blessed( $req->body ), 'HTTP::Body::OctetStream', 'Request body right class';
 
 done_testing;
 

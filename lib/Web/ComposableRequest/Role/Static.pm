@@ -22,7 +22,7 @@ around '_build_uri' => sub {
 
    my $path = $self->_base.$self->locale.'/'.$self->path.'.html';
 
-   return new_uri $path, $self->scheme;
+   return new_uri $self->scheme, $path;
 };
 
 around 'uri_for' => sub {
@@ -49,7 +49,7 @@ around 'uri_for' => sub {
 
    $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
 
-   my $uri = new_uri $path.$extn, $self->scheme;
+   my $uri = new_uri $self->scheme, $path.$extn;
 
    $query_params[ 0 ] and $uri->query_form( @query_params );
 

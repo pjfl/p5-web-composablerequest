@@ -36,20 +36,6 @@ my $_base64_char_set = sub {
    return [ 0 .. 9, 'A' .. 'Z', '_', 'a' .. 'z', '~', '+' ];
 };
 
-my $_bsonid_inc = sub {
-   my $now = shift; $bson_id_count++;
-
-   $now > $bson_prev_time and $bson_id_count = 0; $bson_prev_time = $now;
-
-   return (pack 'n', thread_id() % 0xFFFF ).(pack 'n', $bson_id_count % 0xFFFF);
-};
-
-my $_bsonid_time = sub {
-   my $now = shift;
-
-   return (substr pack( 'N', $now >> 32 ), 2, 2).(pack 'N', $now % 0xFFFFFFFF);
-};
-
 my $_index64 = sub {
    return [ qw(XX XX XX XX  XX XX XX XX  XX XX XX XX  XX XX XX XX
                XX XX XX XX  XX XX XX XX  XX XX XX XX  XX XX XX XX
@@ -70,18 +56,7 @@ my $_index64 = sub {
                XX XX XX XX  XX XX XX XX  XX XX XX XX  XX XX XX XX) ];
 };
 
-my $_bson_id = sub {
-   my $now = time; my $pid = pack 'n', $PID % 0xFFFF;
-
-   return $_bsonid_time->( $now ).$host_id.$pid.$_bsonid_inc->( $now );
-};
-
-# Exported functions
-sub add_config_role ($) {
-   my $role = shift; return push @config_roles, $role;
-}
-
-sub base64_decode_ns ($) {
+my $_base64_decode_ns = sub {
    my $x = shift; defined $x or return; my @x = split q(), $x;
 
    my $index = $_index64->(); my $j = 0; my $k = 0;
@@ -114,9 +89,9 @@ sub base64_decode_ns ($) {
  }
 
    return join q(), map { chr $_ } @y;
-}
+};
 
-sub base64_encode_ns (;$) {
+my $_base64_encode_ns = sub {
    my $x = shift; defined $x or return; my @x = split q(), $x;
 
    my $basis = $_base64_char_set->(); my $len = length $x; my @y = ();
@@ -144,14 +119,47 @@ sub base64_encode_ns (;$) {
    }
 
    return join q(), @y;
+};
+
+my $_bsonid_inc = sub {
+   my $now = shift; $bson_id_count++;
+
+   $now > $bson_prev_time and $bson_id_count = 0; $bson_prev_time = $now;
+
+   return (pack 'n', thread_id() % 0xFFFF ).(pack 'n', $bson_id_count % 0xFFFF);
+};
+
+my $_bsonid_time = sub {
+   my $now = shift;
+
+   return (substr pack( 'N', $now >> 32 ), 2, 2).(pack 'N', $now % 0xFFFFFFFF);
+};
+
+my $_bson_id = sub {
+   my $now = time; my $pid = pack 'n', $PID % 0xFFFF;
+
+   return $_bsonid_time->( $now ).$host_id.$pid.$_bsonid_inc->( $now );
+};
+
+# Exported functions
+sub add_config_role ($) {
+   my $role = shift; return push @config_roles, $role;
+}
+
+sub base64_decode_ns ($) {
+   return $_base64_decode_ns->( $_[ 0 ] );
+}
+
+sub base64_encode_ns (;$) {
+   return $_base64_encode_ns->( $_[ 0 ] );
 }
 
 sub bson64id (;$) {
-   return base64_encode_ns( $_bson_id->() );
+   return $_base64_encode_ns->( $_bson_id->() );
 }
 
 sub bson64id_time ($) {
-   return unpack 'N', substr base64_decode_ns( $_[ 0 ] ), 2, 4;
+   return unpack 'N', substr $_base64_decode_ns->( $_[ 0 ] ), 2, 4;
 }
 
 sub compose_class ($$;@) {
@@ -245,7 +253,7 @@ sub merge_attributes ($$$;$) {
 }
 
 sub new_uri ($$) {
-   return bless uric_escape( $_[ 0 ] ), 'URI::'.$_[ 1 ];
+   return bless uric_escape( $_[ 1 ] ), 'URI::'.$_[ 0 ];
 }
 
 sub thread_id () {
@@ -398,7 +406,7 @@ may be an object in which case its accessor methods are called
 
 =head2 C<new_uri>
 
-   $uri_object_ref = new_uri $uri_path, $scheme;
+   $uri_object_ref = new_uri $scheme, $uri_path;
 
 Return a new L</URI> object reference
 
