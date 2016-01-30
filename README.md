@@ -1,5 +1,6 @@
 <div>
     <a href="https://travis-ci.org/pjfl/p5-web-composablerequest"><img src="https://travis-ci.org/pjfl/p5-web-composablerequest.svg?branch=master" alt="Travis CI Badge"></a>
+    <a href="https://roxsoft.co.uk/coverage/report/web-composablerequest/latest"><img src="https://roxsoft.co.uk/coverage/badge/web-composablerequest/latest" alt="Coverage Badge"></a>
     <a href="http://badge.fury.io/pl/Web-ComposableRequest"><img src="https://badge.fury.io/pl/Web-ComposableRequest.svg" alt="CPAN Badge"></a>
     <a href="http://cpants.cpanauthors.org/dist/Web-ComposableRequest"><img src="http://cpants.cpanauthors.org/dist/Web-ComposableRequest.png" alt="Kwalitee Badge"></a>
 </div>
