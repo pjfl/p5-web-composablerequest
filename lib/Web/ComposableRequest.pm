@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.6.%d', q$Rev: 7 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.6.%d', q$Rev: 8 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -28,13 +28,13 @@ my $_build_config_class = sub {
 };
 
 my $_build_request_class = sub {
-   my $self  = shift;
-   my $base  = __PACKAGE__.'::Base';
-   my $conf  = $self->config_attr or return $base;
-   my $deflt = { request_class => $base, request_roles => [] };
-   my $attr  = {};
+   my $self = shift;
+   my $base = __PACKAGE__.'::Base';
+   my $conf = $self->config_attr or return $base;
+   my $dflt = { request_class => $base, request_roles => [] };
+   my $attr = {};
 
-   merge_attributes $attr, $conf, $deflt, [ keys %{ $deflt } ];
+   merge_attributes $attr, $conf, $dflt, [ keys %{ $dflt } ];
 
    my @roles = @{ $attr->{request_roles} };
 
@@ -54,7 +54,7 @@ has 'config'        => is => 'lazy', isa => Object,
    builder          => $_build_config, init_arg => undef;
 
 has 'config_attr'   => is => 'ro',   isa => HashRef | Object | Undef,
-   builder          => sub {},  init_arg => 'config';
+   init_arg         => 'config';
 
 has 'config_class'  => is => 'lazy', isa => NonEmptySimpleStr,
    builder          => $_build_config_class;

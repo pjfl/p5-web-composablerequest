@@ -31,7 +31,7 @@ around 'BUILDARGS' => sub {
    my ($orig, $self, $config) = @_; my $attr = {};
 
    defined $config
-       and merge_attributes $attr, $config, {}, [ $_list_attr_of->( $self ) ];
+       and merge_attributes $attr, $config, [ $_list_attr_of->( $self ) ];
 
    return $attr;
 };

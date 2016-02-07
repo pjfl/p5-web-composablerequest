@@ -344,7 +344,7 @@ Web::ComposableRequest::Base - Request class core attributes and methods
       my $conf  = $self->config_attr or return $base;
       my $attr  = {};
 
-      merge_attributes $attr, $conf, {} [ 'request_class', 'request_roles' ];
+      merge_attributes $attr, $conf, [ 'request_class', 'request_roles' ];
 
       my $class = $attr->{request_class} // $base;
       my @roles = $attr->{request_roles} // [];

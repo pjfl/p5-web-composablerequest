@@ -78,8 +78,7 @@ my $_build_localiser = sub {
 has 'domain'        => is => 'lazy', isa => NonEmptySimpleStr | Undef,
    builder          => sub {};
 
-has 'domain_prefix' => is => 'lazy', isa => NonEmptySimpleStr | Undef,
-   builder          => sub {};
+has 'domain_prefix' => is => 'lazy', isa => NonEmptySimpleStr | Undef;
 
 has 'language'      => is => 'lazy', isa => NonEmptySimpleStr,
    builder          => sub { extract_lang $_[ 0 ]->locale };
