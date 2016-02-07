@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.7.1     2016-02-07 03:15:34
           - Refactored merge_attributes function
           - Added coverage badge markup
           - Can set the base when generating URIs
