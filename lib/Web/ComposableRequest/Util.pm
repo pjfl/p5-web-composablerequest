@@ -429,7 +429,7 @@ Returns the id of this thread. Returns zero if threads are not loaded
    throw error => 'error_key', args => [ 'error_arg' ];
 
 Expose L<Web::ComposableRequest::Exception/throw>.
-L<Web::ComposableRequest::Usul::Constants> has a class attribute
+L<Web::ComposableRequest::Constants> has a class attribute
 I<Exception_Class> which can be set change the class of the thrown exception
 
 =head2 C<trim>
