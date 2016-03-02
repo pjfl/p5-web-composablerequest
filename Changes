@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Better exception message for uri_params
+
 0.7.1     2016-02-07 03:15:34
           - Refactored merge_attributes function
           - Added coverage badge markup

@@ -203,11 +203,11 @@ my $_scrub_value = sub {
 
    $pattern and defined $v and $v =~ s{ $pattern }{}gmx;
 
+   $name =~ m{ \A [\-]? \d+ \z }mx and $name = "arg[${name}]";
+
    $opts->{optional} or $opts->{allow_null} or $len = length $v
       or  throw Unspecified, [ $name ], level => 4,
                 rv => HTTP_EXPECTATION_FAILED;
-
-   $name =~ m{ \A \d+ \z }mx and $name = "arg[${name}]";
 
    $len and $len > $opts->{max_length}
       and throw 'Parameter [_1] size [_2] too big', [ $name, $len ], level => 4,
