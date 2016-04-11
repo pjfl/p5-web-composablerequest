@@ -3,6 +3,7 @@ package Web::ComposableRequest::Config;
 use namespace::autoclean;
 
 use Class::Inspector;
+use File::Spec::Functions        qw( tmpdir );
 use Unexpected::Types            qw( NonEmptySimpleStr PositiveInt Str );
 use Web::ComposableRequest::Util qw( merge_attributes is_member );
 use Moo;
@@ -27,7 +28,7 @@ has 'scrubber'       => is => 'ro', isa => Str,
    default           => '[^ +\-\./0-9@A-Z\\_a-z~]';
 
 has 'tempdir'        => is => 'ro', isa => Str, coerce => sub { $_[ 0 ].q() },
-   required          => 1;
+   default           => sub { tmpdir };
 
 # Construction
 around 'BUILDARGS' => sub {
