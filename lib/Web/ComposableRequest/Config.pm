@@ -26,6 +26,9 @@ has 'max_asset_size' => is => 'ro', isa => PositiveInt,
 has 'scrubber'       => is => 'ro', isa => Str,
    default           => '[^ +\-\./0-9@A-Z\\_a-z~]';
 
+has 'tempdir'        => is => 'ro', isa => Str, coerce => sub { $_[ 0 ].q() },
+   required          => 1;
+
 # Construction
 around 'BUILDARGS' => sub {
    my ($orig, $self, $config) = @_; my $attr = {};

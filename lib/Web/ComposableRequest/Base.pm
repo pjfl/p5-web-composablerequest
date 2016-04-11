@@ -25,7 +25,9 @@ my $_build_body = sub {
 
    my $body = HTTP::Body->new( $self->content_type, $len );
 
-   $body->cleanup( TRUE ); $len or return $body;
+   $body->cleanup( TRUE ); $body->tmpdir( $self->_config->tempdir );
+
+   $len or return $body;
 
    try   { $self->_decode_body( $body, $content ) }
    catch {
