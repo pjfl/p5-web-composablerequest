@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.9.1     2016-04-12 00:52:04
           - Set HTTP::Body::tmpdir. Permissions in production
 
 0.8.1     2016-03-05 20:16:49
