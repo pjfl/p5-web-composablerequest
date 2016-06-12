@@ -300,7 +300,8 @@ sub uri_for {
 
    first_char $path ne '/' and $path = $base.$path;
 
-   $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
+   $uri_params->[ 0 ] and $path = join '/', $path,
+      grep { defined and length } @{ $uri_params };
 
    my $uri = new_uri $self->scheme, $path;
 

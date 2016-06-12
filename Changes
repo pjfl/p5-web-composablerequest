@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+0.10.1    2016-06-12 03:06:36
+          - Fixed undefined uri params warnings in uri_for
           - Removed patch to Role::Tiny since RT#106276 fixed
 
 0.9.1     2016-04-12 00:52:04

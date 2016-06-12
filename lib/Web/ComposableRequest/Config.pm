@@ -98,6 +98,10 @@ A string used as a character class in a regular expression. These character
 are scrubber from user input so they cannot appear in any user supplied
 pathnames or query terms. Defaults to C<[;\$\`&\r\n]>
 
+=item C<tempdir>
+
+Directory used to store temporary files
+
 =back
 
 =head1 Subroutines/Methods
