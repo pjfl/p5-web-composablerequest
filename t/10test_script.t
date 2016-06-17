@@ -33,9 +33,11 @@ my $env     = {
    HTTP_ACCEPT_LANGUAGE => 'en-gb,en;q=0.7,de;q=0.3',
    HTTP_COOKIE          => $cookie,
    HTTP_HOST            => 'localhost:5000',
+   HTTP_REFERER         => 'asif',
    PATH_INFO            => '/api',
    QUERY_STRING         => 'key=124-4',
    REMOTE_ADDR          => '127.0.0.1',
+   REMOTE_HOST          => 'notlikely',
    REQUEST_METHOD       => 'POST',
    SERVER_PROTOCOL      => 'HTTP/1.1',
    'psgi.input'         => IO::String->new( $input ),
@@ -57,7 +59,8 @@ is $req->port, 80, 'Default port';
 is $req->method, 'post', 'Request method';
 is $req->query, '?key=124-4', 'Request query';
 is $req->protocol, 'HTTP/1.1', 'Protocol';
-is $req->remote_host, q(), 'Remote host';
+is $req->referer, 'asif', 'Referer';
+is $req->remote_host, 'notlikely', 'Remote host';
 is $req->uri, 'http://localhost:5000/api?key=124-4', 'Builds URI';
 is $req->has_upload, q(), 'Upload predicate false';
 is $req->body_params->( 'key' ), 'value1', 'Body params scrubs unwanted chars';

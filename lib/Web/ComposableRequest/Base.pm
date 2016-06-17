@@ -103,6 +103,9 @@ has 'protocol'       => is => 'lazy', isa => NonEmptySimpleStr,
 has 'query'          => is => 'lazy', isa => Str, builder => sub {
    my $v             =  $_[ 0 ]->_env->{ 'QUERY_STRING' }; $v ? "?${v}" : NUL };
 
+has 'referer'        => is => 'lazy', isa => Str,
+   builder           => sub { $_[ 0 ]->_env->{ 'HTTP_REFERER' } // NUL };
+
 has 'remote_host'    => is => 'lazy', isa => SimpleStr,
    builder           => sub { $_[ 0 ]->_env->{ 'REMOTE_HOST' } // NUL };
 
@@ -423,6 +426,10 @@ A non empty simple string. The protocol used by the request e.g. C<HTTP/2.0>
 
 The query parameters from the current request. A simple string beginning with
 C<?>
+
+=item C<referer>
+
+The C<HTTP_REFERER> attribute from the Plack environment
 
 =item C<remote_host>
 
