@@ -20,15 +20,20 @@ has 'updated'       => is => 'ro',  isa => NonZeroPositiveInt, required => TRUE;
 has 'username'      => is => 'rw',  isa => SimpleStr, default => NUL;
 
 # Private attributes
-has '_config'       => is => 'ro',  isa => Object, init_arg => 'config',
+has '_sess_expired' => is => 'lazy', isa => CodeRef,
+   init_arg         => 'session_expired', builder => sub { sub {
+      $_[ 0 ]->authenticated( FALSE ); return 'User [_1] session expired';
+   } };
+
+has '_config'       => is => 'ro',   isa => Object, init_arg => 'config',
    required         => TRUE;
 
-has '_log'          => is => 'ro',  isa => CodeRef, init_arg => 'log',
+has '_log'          => is => 'ro',   isa => CodeRef, init_arg => 'log',
    required         => TRUE;
 
-has '_mid'          => is => 'rwp', isa => NonEmptySimpleStr | Undef;
+has '_mid'          => is => 'rwp',  isa => NonEmptySimpleStr | Undef;
 
-has '_session'      => is => 'ro',  isa => HashRef, init_arg => 'session',
+has '_session'      => is => 'ro',   isa => HashRef, init_arg => 'session',
    required         => TRUE;
 
 # Private functions
@@ -56,8 +61,8 @@ sub BUILD {
 
    if ($self->authenticated and $max_time
        and time > $self->updated + $max_time) {
-      my $username = $self->username; $self->authenticated( FALSE );
-      my $message  = 'User [_1] session expired';
+      my $message = $self->_sess_expired->( $self );
+      my $username = $self->username;
 
       $self->_set__mid( $self->add_status_message( [ $message, $username ] ) );
    }
