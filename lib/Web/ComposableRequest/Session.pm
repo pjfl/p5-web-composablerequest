@@ -20,11 +20,6 @@ has 'updated'       => is => 'ro',  isa => NonZeroPositiveInt, required => TRUE;
 has 'username'      => is => 'rw',  isa => SimpleStr, default => NUL;
 
 # Private attributes
-has '_sess_expired' => is => 'lazy', isa => CodeRef,
-   init_arg         => 'session_expired', builder => sub { sub {
-      $_[ 0 ]->authenticated( FALSE ); return 'User [_1] session expired';
-   } };
-
 has '_config'       => is => 'ro',   isa => Object, init_arg => 'config',
    required         => TRUE;
 
@@ -61,7 +56,7 @@ sub BUILD {
 
    if ($self->authenticated and $max_time
        and time > $self->updated + $max_time) {
-      my $message = $self->_sess_expired->( $self );
+      my $message = $self->_config->expire_session->( $self );
       my $username = $self->username;
 
       $self->_set__mid( $self->add_status_message( [ $message, $username ] ) );
@@ -84,16 +79,18 @@ sub add_status_message {
 sub collect_status_message {
    my ($self, $req) = @_; my ($mid, $msg);
 
-   $mid = $req->query_params->( 'mid', { optional => TRUE } )
-      and $msg = delete $self->messages->{ $mid }
-      and return $req->loc( @{ $msg } );
-
    $mid = $self->_mid
       and $msg = delete $self->messages->{ $mid }
       and $self->_log->( { level   => 'debug',
                            message => $req->loc_default( @{ $msg } ) } );
 
-   return $msg ? $req->loc( @{ $msg } ) : undef;
+   $msg and return $req->loc( @{ $msg } );
+
+   $mid = $req->query_params->( 'mid', { optional => TRUE } )
+      and $msg = delete $self->messages->{ $mid }
+      and return $req->loc( @{ $msg } );
+
+   return;
 }
 
 sub trim_message_queue {

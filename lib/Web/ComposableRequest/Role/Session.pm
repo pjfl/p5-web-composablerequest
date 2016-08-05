@@ -25,19 +25,25 @@ package Web::ComposableRequest::Role::Session::Config;
 
 use namespace::autoclean;
 
-use Unexpected::Types qw( ArrayRef HashRef NonEmptySimpleStr
+use Web::ComposableRequest::Constants qw( FALSE );
+use Unexpected::Types qw( ArrayRef CodeRef HashRef NonEmptySimpleStr
                           NonZeroPositiveInt PositiveInt );
 use Moo::Role;
 
-has 'max_messages'  => is => 'ro', isa => NonZeroPositiveInt, default => 3;
+has 'expire_session' => is => 'lazy', isa => CodeRef,
+   builder           => sub { sub {
+      $_[ 0 ]->authenticated( FALSE ); return 'User [_1] session expired';
+   } };
 
-has 'max_sess_time' => is => 'ro', isa => PositiveInt, default => 3_600;
+has 'max_messages'   => is => 'ro', isa => NonZeroPositiveInt, default => 3;
 
-has 'session_attr'  => is => 'ro', isa => HashRef[ArrayRef],
-   builder          => sub { {} };
+has 'max_sess_time'  => is => 'ro', isa => PositiveInt, default => 3_600;
 
-has 'session_class' => is => 'ro', isa => NonEmptySimpleStr,
-   default          => 'Web::ComposableRequest::Session';
+has 'session_attr'   => is => 'ro', isa => HashRef[ArrayRef],
+   builder           => sub { {} };
+
+has 'session_class'  => is => 'ro', isa => NonEmptySimpleStr,
+   default           => 'Web::ComposableRequest::Session';
 
 1;
 
@@ -85,6 +91,12 @@ Defaults to L<Web::ComposableRequest::Session>
 Defines the following configuration attributes
 
 =over 3
+
+=item C<expire_session>
+
+A code reference which will be called passing in the session object reference
+when the session has expired. By default it sets the C<authenticated> boolean
+to false and returns the message displayed by the application
 
 =item C<max_messages>
 

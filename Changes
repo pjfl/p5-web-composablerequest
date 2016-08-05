@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Renames session_expired to expire_session
+
 0.12.1    2016-08-02 21:36:48
           - Adds session_expired callback
 
