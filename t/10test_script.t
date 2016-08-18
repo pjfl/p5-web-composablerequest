@@ -115,10 +115,11 @@ $env   = { HTTP_HOST       => 'localhost:5000',
 $req   = $factory->new_from_simple_request( {}, undef, $query, $env );
 
 is $req->tunnel_method, 'post', 'Tunnel method from query params';
-is $req->session->collect_status_message( $req ), 'bite me', 'Status message';
 
 like $req->session->collect_status_message( $req ),
    qr{ \Qsession expired\E }mx, 'Session expired';
+
+is $req->session->collect_status_message( $req ), 'bite me', 'Status message';
 
 $req->session->update;
 $query = { locale => 'ru', mode => 'static' };
