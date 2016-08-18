@@ -1,5 +1,6 @@
 do { my $x = {
-       'nightshade64' => '58c88ce8-37fe-11e6-afb7-4393435f1677'
+       'nightshade64' => '58c88ce8-37fe-11e6-afb7-4393435f1677',
+       'virtua.com.br' => '45d0a1fa-6343-11e6-a772-a07c19fe2ca9'
      };
   $x;
  }
