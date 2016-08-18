@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.13.1    2016-08-18 04:34:09
           - Toolchain update
           - Added broken smoker
           - Renames session_expired to expire_session
