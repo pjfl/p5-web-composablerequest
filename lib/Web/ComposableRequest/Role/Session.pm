@@ -10,12 +10,12 @@ requires qw( loc loc_default query_params _config _env _log );
 
 add_config_role __PACKAGE__.'::Config';
 
-has 'session'       => is => 'lazy', isa => Object, builder => sub {
+has 'session'   => is => 'lazy', isa => Object, builder => sub {
    return $_[ 0 ]->session_class->new
-      ( config      => $_[ 0 ]->_config,
-        log         => $_[ 0 ]->_log,
-        session     => $_[ 0 ]->_env->{ 'psgix.session' }, ) },
-   handles          => [ 'authenticated', 'username' ];
+      ( config  => $_[ 0 ]->_config,
+        request => $_[ 0 ],
+        session => $_[ 0 ]->_env->{ 'psgix.session' }, ) },
+   handles      => [ 'authenticated', 'username' ];
 
 has 'session_class' => is => 'lazy', isa => LoadableClass, builder => sub {
    my $conf = $_[ 0 ]->_config;
@@ -32,8 +32,7 @@ use Moo::Role;
 
 has 'expire_session' => is => 'lazy', isa => CodeRef,
    builder           => sub { sub {
-      $_[ 0 ]->authenticated( FALSE ); return 'User [_1] session expired';
-   } };
+      [ 'User [_1] session expired', $_[ 0 ]->username ] } };
 
 has 'max_messages'   => is => 'ro', isa => NonZeroPositiveInt, default => 3;
 

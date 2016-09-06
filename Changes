@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Adds collect_message_id
+
 0.13.1    2016-08-18 04:34:09
           - Toolchain update
           - Added broken smoker

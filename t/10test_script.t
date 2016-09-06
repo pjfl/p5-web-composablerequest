@@ -90,6 +90,8 @@ is $req->get_cookie_hash( 'cookie2' )->{key4}, 'val4', 'Gets cookie value 4';
 is $req->session->theme, 'green', 'Default session attribute value';
 is $session->{theme}, undef, 'Envirnoment hash value undef';
 
+is $req->session->collect_message_id( $req ), undef, 'Collects no message id';
+
 $req->session->add_status_message( [ 'bite [_1]',  'her'    ] );
 $req->session->add_status_message( [ 'bite [_1]', [ 'him' ] ] );
 $req->session->add_status_message( [ 'bite any'             ] );
@@ -116,9 +118,13 @@ $req   = $factory->new_from_simple_request( {}, undef, $query, $env );
 
 is $req->tunnel_method, 'post', 'Tunnel method from query params';
 
+is $req->session->collect_message_id( $req ), $req->session->_mid,
+   'Collects private message id';
+
 like $req->session->collect_status_message( $req ),
    qr{ \Qsession expired\E }mx, 'Session expired';
 
+is $req->session->collect_message_id( $req ), $mid, 'Collects message id';
 is $req->session->collect_status_message( $req ), 'bite me', 'Status message';
 
 $req->session->update;

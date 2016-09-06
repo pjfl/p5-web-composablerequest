@@ -4,7 +4,7 @@ use namespace::autoclean;
 
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS FALSE NUL TRUE );
 use Web::ComposableRequest::Util      qw( bson64id is_arrayref throw );
-use Unexpected::Types                 qw( ArrayRef Bool CodeRef HashRef
+use Unexpected::Types                 qw( ArrayRef Bool HashRef
                                           NonEmptySimpleStr NonZeroPositiveInt
                                           Object SimpleStr Undef );
 use Moo;
@@ -20,15 +20,15 @@ has 'updated'       => is => 'ro',  isa => NonZeroPositiveInt, required => TRUE;
 has 'username'      => is => 'rw',  isa => SimpleStr, default => NUL;
 
 # Private attributes
-has '_config'       => is => 'ro',   isa => Object, init_arg => 'config',
+has '_config'       => is => 'ro',  isa => Object, init_arg => 'config',
    required         => TRUE;
 
-has '_log'          => is => 'ro',   isa => CodeRef, init_arg => 'log',
-   required         => TRUE;
+has '_mid'          => is => 'rwp', isa => NonEmptySimpleStr | Undef;
 
-has '_mid'          => is => 'rwp',  isa => NonEmptySimpleStr | Undef;
+has '_request'      => is => 'ro',  isa => Object, init_arg => 'request',
+   required         => TRUE, weak_ref => TRUE;
 
-has '_session'      => is => 'ro',   isa => HashRef, init_arg => 'session',
+has '_session'      => is => 'ro',  isa => HashRef, init_arg => 'session',
    required         => TRUE;
 
 # Private functions
@@ -52,14 +52,19 @@ around 'BUILDARGS' => sub {
 };
 
 sub BUILD {
-   my $self = shift; my $max_time = $self->_config->max_sess_time;
+   my $self = shift; my $conf = $self->_config;
+
+   my $max_time = $conf->max_sess_time;
 
    if ($self->authenticated and $max_time
        and time > $self->updated + $max_time) {
-      my $message = $self->_config->expire_session->( $self );
-      my $username = $self->username;
+      my $req = $self->_request;
+      my $msg = $conf->expire_session->( $self, $req );
 
-      $self->_set__mid( $self->add_status_message( [ $message, $username ] ) );
+      $self->authenticated( FALSE );
+      $self->_set__mid( $self->add_status_message( $msg ) );
+      $req->_log->( { level => 'debug',
+                      message => $req->loc_default( @{ $msg } ) } );
    }
 
    return;
@@ -76,15 +81,19 @@ sub add_status_message {
    return $mid;
 }
 
+sub collect_message_id {
+   my ($self, $req) = @_;
+
+   return $self->_mid && exists $self->messages->{ $self->_mid }
+        ? $self->_mid : $req->query_params->( 'mid', { optional => TRUE } );
+}
+
 sub collect_status_message {
    my ($self, $req) = @_; my ($mid, $msg);
 
    $mid = $self->_mid
       and $msg = delete $self->messages->{ $mid }
-      and $self->_log->( { level   => 'debug',
-                           message => $req->loc_default( @{ $msg } ) } );
-
-   $msg and return $req->loc( @{ $msg } );
+      and return $req->loc( @{ $msg } );
 
    $mid = $req->query_params->( 'mid', { optional => TRUE } )
       and $msg = delete $self->messages->{ $mid }
@@ -215,6 +224,12 @@ object from the Plack environment
 Appends the message to the message queue for this session. The C<$message>
 argument is an array reference, first the message then the positional
 parameters
+
+=head2 C<collect_message_id>
+
+   $mid = $session->collect_message_id( $req );
+
+Return any pending message id
 
 =head2 C<collect_status_message>
 
