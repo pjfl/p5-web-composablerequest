@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.14.%d', q$Rev: 2 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.14.%d', q$Rev: 3 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -73,7 +73,11 @@ sub new_from_simple_request {
    @args and is_hashref $args[ -1 ] and $attr->{params} = pop @args;
 
    if ((@args and blessed $args[ 0 ])) { $attr->{upload} = $args[ 0 ] }
-   else { $attr->{args} = [ split m{ / }mx, trim $args[ 0 ] || NUL ] };
+   else {
+      for my $arg (grep { defined && length } @args) {
+         push @{ $attr->{args} //= [] }, map { trim $_ } split m{ / }mx, $arg;
+      }
+   };
 
    return $request_class->new( $self->buildargs->( $self, $attr ) );
 }
