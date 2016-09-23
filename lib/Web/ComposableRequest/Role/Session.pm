@@ -2,8 +2,9 @@ package Web::ComposableRequest::Role::Session;
 
 use namespace::autoclean;
 
-use Web::ComposableRequest::Util qw( add_config_role compose_class );
-use Unexpected::Types            qw( LoadableClass Object );
+use Web::ComposableRequest::Constants qw( TRUE );
+use Web::ComposableRequest::Util      qw( add_config_role compose_class );
+use Unexpected::Types                 qw( LoadableClass Object );
 use Moo::Role;
 
 requires qw( loc loc_default query_params _config _env _log );
@@ -15,7 +16,7 @@ has 'session'   => is => 'lazy', isa => Object, builder => sub {
       ( config  => $_[ 0 ]->_config,
         request => $_[ 0 ],
         session => $_[ 0 ]->_env->{ 'psgix.session' }, ) },
-   handles      => [ 'authenticated', 'username' ];
+   clearer => TRUE, handles => [ 'authenticated', 'username' ];
 
 has 'session_class' => is => 'lazy', isa => LoadableClass, builder => sub {
    my $conf = $_[ 0 ]->_config;

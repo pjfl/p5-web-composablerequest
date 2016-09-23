@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Adds session clearer
           - Collects rest of uri params from W::S into _args
           - Added broken smoker
 
