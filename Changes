@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Added broken smoker
+
 0.15.1    2016-10-02 04:23:39
           - Adds session clearer
           - Collects rest of uri params from W::S into _args
