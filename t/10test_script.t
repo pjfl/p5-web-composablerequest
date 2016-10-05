@@ -145,6 +145,10 @@ is $req->uri_for, '../en/index.html', 'Default static uri_for';
 
 is $req->loc( 'One [_1] Three', [ 'Two' ] ), "One 'Two' Three", 'Localises - 1';
 
+$req->session->theme( 'red' ); $req->reset_session;
+
+is $req->session->theme, 'green', 'Resets session';
+
 $req = $factory->new_from_simple_request( {}, q() );
 
 is $req->query_params->( 'key', { optional => 1 } ), undef,

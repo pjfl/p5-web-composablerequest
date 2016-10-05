@@ -22,6 +22,15 @@ has 'session_class' => is => 'lazy', isa => LoadableClass, builder => sub {
    my $conf = $_[ 0 ]->_config;
    compose_class( $conf->session_class, $conf->session_attr, is => 'rw' ) };
 
+sub reset_session {
+   my $self = shift; my $psgix_sess = $self->_env->{ 'psgix.session' };
+
+   delete $psgix_sess->{ $_ } for (keys %{ $psgix_sess });
+
+   $self->clear_session;
+   return;
+}
+
 package Web::ComposableRequest::Role::Session::Config;
 
 use namespace::autoclean;
@@ -124,7 +133,10 @@ The name of the session base class
 
 =head1 Subroutines/Methods
 
-Defines no methods
+=head2 C<reset_session>
+
+Resets the session object so that next time it is referenced a new one is
+minted
 
 =head1 Diagnostics
 
