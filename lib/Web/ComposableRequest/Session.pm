@@ -102,6 +102,23 @@ sub collect_status_message {
    return;
 }
 
+sub collect_status_messages {
+   my ($self, $req) = @_; my @messages = ();
+
+   my $mid = $req->query_params->( 'mid', { optional => TRUE } )
+      or return \@messages;
+
+   my @keys = reverse sort keys %{ $self->messages };
+
+   while (my $key = $keys[ 0 ]) {
+      $key gt $mid and next; my $msg = delete $self->messages->{ $key };
+
+      push @messages, $req->loc( @{ $msg } ); shift @keys;
+   }
+
+   return \@messages;
+}
+
 sub trim_message_queue {
    my $self = shift; my @queue = sort keys %{ $self->messages };
 
@@ -236,6 +253,13 @@ Return any pending message id
    $localised_message = $session->collect_status_message( $req );
 
 Returns the next message in the queue (if there is one) for the given request
+
+=head2 C<collect_status_messages>
+
+   \@localised_messages = $session->collect_status_messages( $req );
+
+Returns previous messages in the queue (if there are any) for the given request
+or any previous requests
 
 =head2 C<trim_message_queue>
 

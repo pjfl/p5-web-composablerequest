@@ -128,6 +128,21 @@ is $req->session->collect_message_id( $req ), $mid, 'Collects message id';
 is $req->session->collect_status_message( $req ), 'bite me', 'Status message';
 
 $req->session->update;
+
+$mid = $req->session->add_status_message( [ 'bite [_1]', 'it' ] );
+$query = { locale => 'en', mid => $mid };
+$env   = { HTTP_HOST       => 'localhost:5000',
+           PATH_INFO       => '/api',
+           'psgix.session' => $session,
+         };
+$req   = $factory->new_from_simple_request( {}, undef, $query, $env );
+
+my $messages = $req->session->collect_status_messages( $req );
+
+is $messages->[ 0 ], "bite 'it'", 'Collect status messages';
+
+$req->session->update;
+
 $query = { locale => 'ru', mode => 'static' };
 $env   = { HTTP_HOST       => 'localhost:5000',
            HTTP_ACCEPT_LANGUAGE => 'sw',
