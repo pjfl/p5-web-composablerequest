@@ -139,7 +139,7 @@ has '_content' => is => 'lazy', isa => Str,
    builder     => $_build__content;
 
 has '_env'     => is => 'ro',   isa => HashRef,
-   builder     => sub { {} }, init_arg => 'env';
+   init_arg    => 'env', required => TRUE;
 
 has '_log'     => is => 'lazy', isa => CodeRef,
    builder     => sub { $_[ 0 ]->_env->{ 'psgix.logger' } // sub {} },

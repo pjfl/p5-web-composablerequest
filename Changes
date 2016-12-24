@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Fixes multiple values in query params
+
 0.17.1    2016-11-14 03:45:44
           - Adds collect_status_messages
 
