@@ -230,8 +230,9 @@ my $_scrub_hash = sub {
       my $v = delete $hash->{ $k };
 
       $hash->{ $_scrub_value->( 'key', $k, $opts ) }
-         = (is_arrayref $v)
-         ? [ map { $_scrub_value->( $k, $_, $opts ) } @{ $v } ]
+         = (is_arrayref $v && $opts->{multiple}) ?
+            [ map { $_scrub_value->( $k, $_, $opts ) } @{ $v } ]
+         : (is_arrayref $v) ? $_get_last_value->( $k, $v, $opts )
          : $_scrub_value->( $k, $v, $opts );
    }
 
