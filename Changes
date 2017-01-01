@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.18.1    2017-01-01 00:05:46
           - Fixes multiple values in query params
 
 0.17.1    2016-11-14 03:45:44
