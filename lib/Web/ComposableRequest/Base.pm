@@ -181,7 +181,7 @@ my $_get_value_or_values = sub {
 
    my $v = (is_arrayref $params and $name eq '-1') ? [ @{ $params } ]
          : (is_arrayref $params                  ) ? $params->[ $name ]
-         : (                        $name eq '-1') ? $params
+         : (                        $name eq '-1') ? { %{ $params } }
                                                    : $params->{ $name };
 
    return $_defined_or_throw->( $name, $v, $opts );
