@@ -1,4 +1,5 @@
 use t::boilerplate;
+use utf8;
 
 use Test::More;
 use English           qw( -no_match_vars );
@@ -8,7 +9,7 @@ use Unexpected::Types qw( NonEmptySimpleStr );
 
 use_ok 'Web::ComposableRequest::Constants', qw( );
 use_ok 'Web::ComposableRequest';
-use_ok 'Web::ComposableRequest::Util', qw( bson64id_time );
+use_ok 'Web::ComposableRequest::Util', qw( bson64id_time new_uri );
 
 my $now     = time;
 my $config  = {
@@ -201,7 +202,8 @@ like $EVAL_ERROR, qr{ Error }mx, 'Throws';
 
 is base64_encode_ns( 'fred' ), 'Pc9aP0++', 'Base64 encoder';
 is base64_decode_ns( 'Pc9aP0++' ), 'fred', 'Base64 decoder';
-is ${ uri_escape( '>' ) }, '%3E', 'URI escape';
+is uri_escape( '>' ), '%3E', 'URI escape';
+is uri_escape( '£' ), '%C2%A3', 'URI escape - UTF8';
 
 decode_hash( 'UTF-8', my $r = { x => 'a', y => [ 'a', 'b', ], } );
 
@@ -237,6 +239,9 @@ is $req->uri_for( 'test', { uri_params => [ 'dummy' ] } ),
    'http://localhost:5000/test/dummy', 'Uri for with hash';
 
 is blessed( $req->body ), 'HTTP::Body::OctetStream', 'Request body right class';
+
+is new_uri( 'http', '//localhost/test&foo=£' ), '//localhost/test&foo=%C2%A3',
+   'UTF8 uri encoding';
 
 done_testing;
 

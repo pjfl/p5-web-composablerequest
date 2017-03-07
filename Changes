@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Fixes UTF8 encoding of new uris
           - Clones hashes before returning
 
 0.18.1    2017-01-01 00:05:46

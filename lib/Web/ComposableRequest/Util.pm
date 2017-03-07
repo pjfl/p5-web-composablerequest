@@ -28,8 +28,8 @@ my @config_roles   = ();
 my $host_id        = substr md5( hostname ), 0, 3;
 my $reserved       = q(;/?:@&=+$,[]);
 my $mark           = q(-_.!~*'());                                   #'; emacs
-my $unreserved     = "A-Za-z0-9\Q${mark}\E";
-my $uric           = quotemeta( $reserved )."${unreserved}%\#";
+my $unreserved     = "A-Za-z0-9\Q${mark}\E%\#";
+my $uric           = quotemeta( $reserved ) . '\p{isAlpha}' . $unreserved;
 
 # Private functions
 my $_base64_char_set = sub {
@@ -261,7 +261,7 @@ sub merge_attributes ($@) {
 }
 
 sub new_uri ($$) {
-   return bless uri_escape( $_[ 1 ] ), 'URI::'.$_[ 0 ];
+   my $v = uri_escape( $_[ 1 ] ); return bless \$v, 'URI::'.$_[ 0 ];
 }
 
 sub thread_id () {
@@ -281,9 +281,9 @@ sub trim (;$$) {
 sub uri_escape ($;$) {
    my ($v, $pattern) = @_; $pattern //= $uric;
 
-   $v =~ s{([^$pattern])}{ URI::Escape::escape_char($1) }ego;
+   $v =~ s{([^$pattern])}{ URI::Escape::uri_escape_utf8($1) }ego;
    utf8::downgrade( $v );
-   return \$v;
+   return $v;
 }
 
 1;
