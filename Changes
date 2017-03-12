@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.19.1    2017-03-12 22:39:59
           - Fixes role classname composition
           - Toolchain update CVE-2016-1238
           - Fixes UTF8 encoding of new uris
