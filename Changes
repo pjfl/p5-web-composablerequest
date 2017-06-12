@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Adds test for endless loop bug
           - Fixes endless loop bug in collect_status_messages
 
 0.19.1    2017-03-12 22:39:59
