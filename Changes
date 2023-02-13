@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Adds Headers role
+
 0.20.1    2017-06-12 21:40:28
           - Adds test for endless loop bug
           - Fixes endless loop bug in collect_status_messages
