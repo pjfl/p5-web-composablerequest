@@ -264,10 +264,6 @@ sub _decode_body {
 }
 
 # Public methods
-sub args {
-   my $self = shift; return $self->uri_params->(@_);
-}
-
 sub body_params {
    my $self = shift; weaken( $self );
 
@@ -277,18 +273,6 @@ sub body_params {
       return $_get_scrubbed_param->
          ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
            ? @_ : (-1, { %{ $_[ 0 ] // {} }, hashref => TRUE }) );
-   };
-}
-
-sub body_parameters {
-   my $self = shift; return $self->body_params->(@_);
-}
-
-sub parameters {
-   my ($self, $options) = @_;
-
-   return {
-      %{$self->query_parameters($options)}, %{$self->body_parameters($options)}
    };
 }
 
@@ -302,10 +286,6 @@ sub query_params {
          ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
            ? @_ : (-1, { %{ $_[ 0 ] // {} }, hashref => TRUE }) );
    };
-}
-
-sub query_parameters {
-   my $self = shift; return $self->query_params->(@_);
 }
 
 sub uri_for {
