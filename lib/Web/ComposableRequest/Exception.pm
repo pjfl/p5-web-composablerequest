@@ -18,7 +18,9 @@ has_exception $class;
 
 has '+class' => default => $class;
 
-has 'rv'     => is => 'ro', isa => Int, default => 1;
+has 'code' => is => 'ro', isa => Int;
+
+has 'rv' => is => 'ro', isa => Int, default => 1;
 
 1;
 

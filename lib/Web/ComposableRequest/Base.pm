@@ -291,25 +291,38 @@ sub query_params {
 sub uri_for {
    my ($self, $path, @args) = @_; $path //= NUL;
 
-   my $base = $self->_base; my @query_params = (); my $uri_params = [];
+   my $base = $self->_base;
+   my @query_params = ();
+   my $uri_params = [];
 
-   if (is_arrayref $args[ 0 ]) {
-      $uri_params = shift @args; @query_params = @args;
+   if (is_arrayref $args[0]) {
+      $uri_params = shift @args;
+      @query_params = @args;
    }
-   elsif (is_hashref $args[ 0 ]) {
-      $uri_params   =    $args[ 0 ]->{uri_params  } // [];
-      @query_params = @{ $args[ 0 ]->{query_params} // [] };
-      $args[ 0 ]->{base} and $base = $args[ 0 ]->{base};
+   elsif (is_hashref $args[0]) {
+      $uri_params   =    $args[0]->{uri_params  } // [];
+      @query_params = @{ $args[0]->{query_params} // [] };
+
+      $base = $args[0]->{base} if $args[0]->{base};
    }
 
-   first_char $path ne '/' and $path = $base.$path;
+   $path = $base.$path if first_char $path ne '/';
 
-   $uri_params->[ 0 ] and $path = join '/', $path,
-      grep { defined and length } @{ $uri_params };
+   if ($uri_params->[0]) {
+      if ($path =~ m{ \* }mx) {
+         for my $arg (grep { defined and length } @{$uri_params}) {
+            if ($path =~ m{ \* }mx) { $path =~ s{ \* }{$arg}mx }
+            else { $path = "${path}/${arg}" }
+         }
+      }
+      else {
+         $path = join '/', $path, grep { defined and length } @{$uri_params};
+      }
+   }
 
    my $uri = new_uri $self->scheme, $path;
 
-   $query_params[ 0 ] and $uri->query_form( @query_params );
+   $uri->query_form(@query_params) if $query_params[0];
 
    return $uri;
 }

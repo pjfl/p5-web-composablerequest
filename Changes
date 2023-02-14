@@ -1,6 +1,7 @@
 Revision history for Web::ComposableRequest
 
-          - Adds Comoat role
+          - Base uri_for now expands * to args from the list
+          - Adds Compat role
           - Adds Headers role
 
 0.20.1    2017-06-12 21:40:28
