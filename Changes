@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Cleaned up L10N code
           - Base uri_for now expands * to args from the list
           - Adds Compat role
           - Adds Headers role
