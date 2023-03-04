@@ -1,16 +1,27 @@
 package Web::ComposableRequest::Role::Compat;
 
-use Web::ComposableRequest::Constants qw( TRUE );
+use JSON::MaybeXS                     qw( decode_json );
+use Web::ComposableRequest::Constants qw( FALSE TRUE );
 use Moo::Role;
 
 requires qw( body_params query_params uri_params );
 
 sub args {
-   my $self = shift; return $self->uri_params->({ optional => TRUE });
+   my $self = shift;
+
+   return $self->uri_params->({ optional => TRUE, scrubber => FALSE });
 }
 
 sub body_parameters {
-   my $self = shift; return $self->body_params->({ optional => TRUE });
+   my $self = shift;
+
+   my $params = $self->body_params->({ optional => TRUE, scrubber => FALSE });
+
+   if (exists $params->{data}) {
+      $params->{data} = decode_json($params->{data});
+   }
+
+   return $params;
 }
 
 sub parameters {
@@ -22,7 +33,9 @@ sub parameters {
 }
 
 sub query_parameters {
-   my $self = shift; return $self->query_params->({ optional => TRUE });
+   my $self = shift;
+
+   return $self->query_params->({ optional => TRUE, scrubber => FALSE });
 }
 
 use namespace::autoclean;

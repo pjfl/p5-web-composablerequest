@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Compat role now even more compat
+          - Added delete_on_collect to session messages
           - Cleaned up L10N code
           - Base uri_for now expands * to args from the list
           - Adds Compat role

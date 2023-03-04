@@ -35,24 +35,26 @@ package Web::ComposableRequest::Role::Session::Config;
 
 use namespace::autoclean;
 
-use Web::ComposableRequest::Constants qw( FALSE );
-use Unexpected::Types qw( ArrayRef CodeRef HashRef NonEmptySimpleStr
+use Web::ComposableRequest::Constants qw( FALSE TRUE );
+use Unexpected::Types qw( ArrayRef Bool CodeRef HashRef NonEmptySimpleStr
                           NonZeroPositiveInt PositiveInt );
 use Moo::Role;
 
-has 'expire_session' => is => 'lazy', isa => CodeRef,
-   builder           => sub { sub {
-      [ 'User [_1] session expired', $_[ 0 ]->username ] } };
+has 'delete_on_collect' => is => 'ro', isa => Bool, default => TRUE;
 
-has 'max_messages'   => is => 'ro', isa => NonZeroPositiveInt, default => 3;
+has 'expire_session' => is => 'lazy', isa => CodeRef, builder => sub { sub {
+   [ 'User [_1] session expired', $_[ 0 ]->username ]
+} };
 
-has 'max_sess_time'  => is => 'ro', isa => PositiveInt, default => 3_600;
+has 'max_messages' => is => 'ro', isa => NonZeroPositiveInt, default => 3;
 
-has 'session_attr'   => is => 'ro', isa => HashRef[ArrayRef],
-   builder           => sub { {} };
+has 'max_sess_time' => is => 'ro', isa => PositiveInt, default => 3_600;
 
-has 'session_class'  => is => 'ro', isa => NonEmptySimpleStr,
-   default           => 'Web::ComposableRequest::Session';
+has 'session_attr' => is => 'ro', isa => HashRef[ArrayRef],
+   builder => sub { {} };
+
+has 'session_class' => is => 'ro', isa => NonEmptySimpleStr,
+   default => 'Web::ComposableRequest::Session';
 
 1;
 

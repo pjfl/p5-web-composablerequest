@@ -5,10 +5,13 @@ use namespace::autoclean;
 use Encode                            qw( decode );
 use JSON::MaybeXS                     qw( );
 use Web::ComposableRequest::Constants qw( FALSE );
+use Web::ComposableRequest::Util      qw( add_config_role );
 use Unexpected::Types                 qw( Object );
 use Moo::Role;
 
 requires qw( content_type _config _decode_body );
+
+add_config_role __PACKAGE__.'::Config';
 
 has '_json' => is => 'lazy', isa => Object,
    builder  => sub { JSON::MaybeXS->new( utf8 => FALSE ) };
@@ -19,11 +22,21 @@ around '_decode_body' => sub {
    $self->content_type eq 'application/json'
       or return $orig->( $self, $body, $content );
 
-   $body->{param} = $self->_json->decode
+   $body->{$self->_config->json_body_attribute} = $self->_json->decode
       ( decode( $self->_config->encoding, $content ) );
 
    return;
 };
+
+package Web::ComposableRequest::Role::JSON::Config;
+
+use Unexpected::Types qw( Str );
+use Moo::Role;
+
+# Public attributes
+has 'json_body_attribute' => is => 'ro', isa => Str, default => 'param';
+
+use namespace::autoclean;
 
 1;
 
