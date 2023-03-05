@@ -1,10 +1,8 @@
 package Web::ComposableRequest::Role::JSON;
 
-use namespace::autoclean;
-
 use Encode                            qw( decode );
 use JSON::MaybeXS                     qw( );
-use Web::ComposableRequest::Constants qw( FALSE );
+use Web::ComposableRequest::Constants qw( FALSE TRUE );
 use Web::ComposableRequest::Util      qw( add_config_role );
 use Unexpected::Types                 qw( Object );
 use Moo::Role;
@@ -14,7 +12,7 @@ requires qw( content_type _config _decode_body );
 add_config_role __PACKAGE__.'::Config';
 
 has '_json' => is => 'lazy', isa => Object,
-   builder  => sub { JSON::MaybeXS->new( utf8 => FALSE ) };
+   builder  => sub { JSON::MaybeXS->new( allow_nonref => TRUE, utf8 => FALSE )};
 
 around '_decode_body' => sub {
    my ($orig, $self, $body, $content) = @_;
@@ -27,6 +25,8 @@ around '_decode_body' => sub {
 
    return;
 };
+
+use namespace::autoclean;
 
 package Web::ComposableRequest::Role::JSON::Config;
 

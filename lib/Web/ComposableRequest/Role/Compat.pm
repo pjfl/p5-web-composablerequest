@@ -1,6 +1,6 @@
 package Web::ComposableRequest::Role::Compat;
 
-use JSON::MaybeXS                     qw( decode_json );
+use Encode                            qw( decode );
 use Web::ComposableRequest::Constants qw( FALSE TRUE );
 use Moo::Role;
 
@@ -18,7 +18,9 @@ sub body_parameters {
    my $params = $self->body_params->({ optional => TRUE, scrubber => FALSE });
 
    if (exists $params->{data}) {
-      $params->{data} = decode_json($params->{data});
+      $params->{data} = $self->_json->decode(
+         decode($self->_config->encoding, $params->{data})
+      );
    }
 
    return $params;
