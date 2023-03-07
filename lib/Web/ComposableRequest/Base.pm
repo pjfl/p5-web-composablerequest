@@ -150,9 +150,11 @@ has '_params'  => is => 'ro',   isa => HashRef,
 
 # Construction
 sub BUILD {
-   my $self = shift; my $enc = $self->_config->encoding;
+   my $self = shift;
+   my $enc  = $self->_config->encoding;
 
-   decode_array $enc, $self->_args; decode_hash $enc, $self->_params;
+   decode_array $enc, $self->_args;
+   decode_hash  $enc, $self->_params;
 
    return;
 }
@@ -258,7 +260,8 @@ my $_get_scrubbed_param = sub {
 sub _decode_body {
    my ($self, $body, $content) = @_;
 
-   $body->add( $content ); decode_hash $self->_config->encoding, $body->param;
+   $body->add( $content );
+   decode_hash $self->_config->encoding, $body->param;
 
    return;
 }
@@ -272,7 +275,7 @@ sub body_params {
    return sub {
       return $_get_scrubbed_param->
          ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
-           ? @_ : (-1, { %{ $_[ 0 ] // {} }, hashref => TRUE }) );
+           ? @_ : (-1, { hashref => TRUE, %{ $_[ 0 ] // {} } }) );
    };
 }
 

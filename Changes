@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Fixes multiple return values in compat body parameters
           - Allow non ref in json decodes
           - Compat role now even more compat
           - Added delete_on_collect to session messages
