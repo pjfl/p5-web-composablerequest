@@ -6,10 +6,11 @@ use parent 'Exporter::Tiny';
 use Web::ComposableRequest::Exception;
 use Role::Tiny ();
 
-our @EXPORT = qw( EXCEPTION_CLASS FALSE LANG NUL TRUE );
+our @EXPORT = qw( COMMA EXCEPTION_CLASS FALSE LANG NUL TRUE );
 
 my $Exception_Class = 'Web::ComposableRequest::Exception';
 
+sub COMMA () { q(,) }
 sub FALSE () { 0    }
 sub LANG  () { 'en' }
 sub NUL   () { q()  }

@@ -15,17 +15,9 @@ sub args {
 sub body_parameters {
    my $self = shift;
 
-   my $params = $self->body_params->({
+   return $self->body_params->({
       hashref => FALSE, optional => TRUE, scrubber => FALSE
    });
-
-   if (exists $params->{data}) {
-      $params->{data} = $self->_json->decode(
-         decode($self->_config->encoding, $params->{data})
-      );
-   }
-
-   return $params;
 }
 
 sub parameters {

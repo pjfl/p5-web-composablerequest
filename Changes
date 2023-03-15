@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Removes unecessary json decode from Compat
+          - Adds serialise method to session
           - Fixes multiple return values in compat body parameters
           - Allow non ref in json decodes
           - Compat role now even more compat

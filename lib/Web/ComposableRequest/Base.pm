@@ -21,19 +21,21 @@ use Moo;
 
 # Attribute constructors
 my $_build_body = sub {
-   my $self = shift; my $content = $self->_content; my $len = length $content;
+   my $self    = shift;
+   my $content = $self->_content;
+   my $len     = length $content;
+   my $body    = HTTP::Body->new($self->content_type, $len);
 
-   my $body = HTTP::Body->new( $self->content_type, $len );
+   $body->cleanup(TRUE);
+   $body->tmpdir($self->_config->tempdir);
 
-   $body->cleanup( TRUE ); $body->tmpdir( $self->_config->tempdir );
+   return $body unless $len;
 
-   $len or return $body;
-
-   try   { $self->_decode_body( $body, $content ) }
+   try   { $self->_decode_body($body, $content) }
    catch {
       # uncoverable subroutine
       # uncoverable statement
-      $self->_log->( { level => 'error', message => $_ } );
+      $self->_log->({ level => 'error', message => $_ });
    };
 
    return $body;

@@ -2,7 +2,7 @@ package Web::ComposableRequest::Session;
 
 use namespace::autoclean;
 
-use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS FALSE NUL TRUE );
+use Web::ComposableRequest::Constants qw( COMMA EXCEPTION_CLASS FALSE NUL TRUE);
 use Web::ComposableRequest::Util      qw( bson64id is_arrayref throw );
 use Unexpected::Types                 qw( ArrayRef Bool HashRef
                                           NonEmptySimpleStr NonZeroPositiveInt
@@ -116,6 +116,19 @@ sub collect_status_messages {
    }
 
    return \@messages;
+}
+
+sub serialise {
+   my $self   = shift;
+   my $string = 'username:' . ($self->username || 'unknown');
+
+   $string .=  COMMA . 'authenticated:' . $self->authenticated;
+
+   for my $attr (@{$self->_config->serialise_session_attr}) {
+      $string .= COMMA . "${attr}:" . $self->$attr;
+   }
+
+   return $string;
 }
 
 sub trim_message_queue {
