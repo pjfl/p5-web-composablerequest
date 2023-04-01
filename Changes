@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Adds name attribute to session log call
           - Removes unecessary json decode from Compat
           - Adds serialise method to session
           - Fixes multiple return values in compat body parameters

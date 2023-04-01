@@ -275,9 +275,10 @@ sub body_params {
    my $params = $self->body->param; weaken( $params );
 
    return sub {
-      return $_get_scrubbed_param->
-         ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
-           ? @_ : (-1, { hashref => TRUE, %{ $_[ 0 ] // {} } }) );
+      return $_get_scrubbed_param->(
+         $self, $params, (defined $_[0] && !is_hashref $_[0])
+            ? @_ : (-1, { hashref => TRUE, %{ $_[0] // {} } })
+      );
    };
 }
 
@@ -287,9 +288,10 @@ sub query_params {
    my $params = $self->_params; weaken( $params );
 
    return sub {
-      return $_get_scrubbed_param->
-         ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
-           ? @_ : (-1, { %{ $_[ 0 ] // {} }, hashref => TRUE }) );
+      return $_get_scrubbed_param->(
+         $self, $params, (defined $_[0] && !is_hashref $_[0])
+            ? @_ : (-1, { hashref => TRUE, %{ $_[0] // {} } })
+      );
    };
 }
 

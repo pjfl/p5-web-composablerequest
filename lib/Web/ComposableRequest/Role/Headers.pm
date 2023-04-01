@@ -20,7 +20,7 @@ has 'headers' => is => 'lazy', isa => class_type('HTTP::Headers::Fast'),
    };
 
 sub header {
-   my $self = shift; return $self->headers->header(@_);
+   my ($self, $name) = @_; return $self->headers->header($name);
 }
 
 use namespace::autoclean;

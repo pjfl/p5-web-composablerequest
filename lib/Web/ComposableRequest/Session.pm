@@ -58,7 +58,11 @@ sub BUILD {
 
       $self->authenticated(FALSE);
       $self->_set__mid($self->add_status_message($msg));
-      $req->_log->({ level => 'debug', message => $req->loc_default(@{$msg}) });
+      $req->_log->({
+         level   => 'debug',
+         message => $req->loc_default(@{$msg}),
+         name    => 'Session.build'
+      });
    }
 
    return;
@@ -120,9 +124,7 @@ sub collect_status_messages {
 
 sub serialise {
    my $self   = shift;
-   my $string = 'username:' . ($self->username || 'unknown');
-
-   $string .=  COMMA . 'authenticated:' . $self->authenticated;
+   my $string = NUL;
 
    for my $attr (@{$self->_config->serialise_session_attr}) {
       $string .= COMMA . "${attr}:" . $self->$attr;
