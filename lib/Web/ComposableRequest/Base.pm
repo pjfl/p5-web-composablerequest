@@ -272,7 +272,9 @@ sub _decode_body {
 sub body_params {
    my $self = shift; weaken( $self );
 
-   my $params = $self->body->param; weaken( $params );
+   my $params = $self->body->param;
+
+   weaken($params) if ref $params;
 
    return sub {
       return $_get_scrubbed_param->(

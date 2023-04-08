@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Only weaken body in get param call if ref
           - Adds name attribute to session log call
           - Removes unecessary json decode from Compat
           - Adds serialise method to session

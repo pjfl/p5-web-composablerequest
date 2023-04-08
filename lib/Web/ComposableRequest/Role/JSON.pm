@@ -17,11 +17,12 @@ has '_json' => is => 'lazy', isa => Object,
 around '_decode_body' => sub {
    my ($orig, $self, $body, $content) = @_;
 
-   $self->content_type eq 'application/json'
-      or return $orig->( $self, $body, $content );
+   return $orig->($self, $body, $content)
+      unless $self->content_type eq 'application/json';
 
-   $body->{$self->_config->json_body_attribute} = $self->_json->decode
-      ( decode( $self->_config->encoding, $content ) );
+   $body->{$self->_config->json_body_attribute} = $self->_json->decode(
+      decode($self->_config->encoding, $content)
+   );
 
    return;
 };
