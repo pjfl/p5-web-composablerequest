@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.20.%d', q$Rev: 10 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.20.%d', q$Rev: 11 $ =~ /\d+/gmx );
 
 use Scalar::Util                      qw( blessed );
 use Web::ComposableRequest::Base;
@@ -49,7 +49,7 @@ my $_build_request_class = sub {
 
 # Public attributes
 has 'buildargs'     => is => 'lazy', isa => CodeRef,
-   builder          => sub { sub { return $_[ 1 ] } };
+   builder          => sub { sub { return $_[1] } };
 
 has 'config'        => is => 'lazy', isa => Object,
    builder          => $_build_config, init_arg => undef;
@@ -70,20 +70,21 @@ sub new_from_simple_request {
    my $request_class = $self->request_class; # Trigger role application
 
    $attr->{config} = $self->config;          # Composed after request_class
-   @args and is_hashref $args[ -1 ] and $attr->{env   } = pop @args;
-   @args and is_hashref $args[ -1 ] and $attr->{params} = pop @args;
+   $attr->{env   } = pop @args if @args and is_hashref $args[-1];
+   $attr->{params} = pop @args if @args and is_hashref $args[-1];
 
-   my $query = $attr->{env}->{ 'Web::Dispatch::ParamParser.unpacked_query' };
-      $query and $attr->{params} = $query;
+   my $query = $attr->{env}->{'Web::Dispatch::ParamParser.unpacked_query'};
 
-   if ((@args and blessed $args[ 0 ])) { $attr->{upload} = $args[ 0 ] }
+   $attr->{params} = $query if $query;
+
+   if ((@args and blessed $args[0])) { $attr->{upload} = $args[0] }
    else {
       for my $arg (grep { defined && length } @args) {
          push @{ $attr->{args} //= [] }, map { trim $_ } split m{ / }mx, $arg;
       }
    };
 
-   return $request_class->new( $self->buildargs->( $self, $attr ) );
+   return $request_class->new($self->buildargs->($self, $attr));
 }
 
 1;
