@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Adds exceptions imported by Web::Components
           - Style improvements
           - Only weaken body in get param call if ref
           - Adds name attribute to session log call
