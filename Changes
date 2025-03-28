@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Finds the upload object in any of the args not just the first
           - Adds exceptions imported by Web::Components
           - Style improvements
           - Only weaken body in get param call if ref
