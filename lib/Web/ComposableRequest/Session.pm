@@ -92,7 +92,7 @@ sub collect_status_message {
    for my $mid ($self->_mid, $req->query_params->('mid', { optional => TRUE })){
       next unless $mid;
 
-      my $msg = $self->messages->{$mid};
+      my $msg = $self->messages->{$mid} or next;
 
       delete $self->messages->{$mid} if $self->_config->delete_on_collect;
       return $req->loc(@{$msg});
@@ -113,7 +113,7 @@ sub collect_status_messages {
    while (my $key = shift @keys) {
       next if $key gt $mid;
 
-      my $msg = $self->messages->{$key};
+      my $msg = $self->messages->{$key} or next;
 
       delete $self->messages->{$key} if $self->_config->delete_on_collect;
       push @messages, $req->loc(@{$msg});

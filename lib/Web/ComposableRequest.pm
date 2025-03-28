@@ -2,7 +2,7 @@ package Web::ComposableRequest;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.20.%d', q$Rev: 13 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.20.%d', q$Rev: 14 $ =~ /\d+/gmx );
 
 use Web::ComposableRequest::Constants qw( NUL );
 use Unexpected::Types                 qw( CodeRef HashRef NonEmptySimpleStr

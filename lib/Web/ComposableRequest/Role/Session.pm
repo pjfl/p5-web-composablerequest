@@ -57,8 +57,7 @@ use Unexpected::Types qw( ArrayRef Bool CodeRef HashRef NonEmptySimpleStr
                           NonZeroPositiveInt PositiveInt );
 use Moo::Role;
 
-has 'delete_on_collect' => is => 'ro', isa => Bool,
-   default => TRUE;
+has 'delete_on_collect' => is => 'ro', isa => Bool, default => TRUE;
 
 has 'expire_session' => is => 'lazy', isa => CodeRef,
    default => sub { sub { [ 'User [_1] session expired', $_[ 0 ]->username ] }};
