@@ -91,15 +91,15 @@ None
 
 # Dependencies
 
-- [CGI::Simple](https://metacpan.org/pod/CGI::Simple)
-- [Class::Inspector](https://metacpan.org/pod/Class::Inspector)
-- [Exporter::Tiny](https://metacpan.org/pod/Exporter::Tiny)
-- [HTTP::Body](https://metacpan.org/pod/HTTP::Body)
-- [HTTP::Message](https://metacpan.org/pod/HTTP::Message)
-- [JSON::MaybeXS](https://metacpan.org/pod/JSON::MaybeXS)
+- [CGI::Simple](https://metacpan.org/pod/CGI%3A%3ASimple)
+- [Class::Inspector](https://metacpan.org/pod/Class%3A%3AInspector)
+- [Exporter::Tiny](https://metacpan.org/pod/Exporter%3A%3ATiny)
+- [HTTP::Body](https://metacpan.org/pod/HTTP%3A%3ABody)
+- [HTTP::Message](https://metacpan.org/pod/HTTP%3A%3AMessage)
+- [JSON::MaybeXS](https://metacpan.org/pod/JSON%3A%3AMaybeXS)
 - [Moo](https://metacpan.org/pod/Moo)
-- [Subclass::Of](https://metacpan.org/pod/Subclass::Of)
-- [Try::Tiny](https://metacpan.org/pod/Try::Tiny)
+- [Subclass::Of](https://metacpan.org/pod/Subclass%3A%3AOf)
+- [Try::Tiny](https://metacpan.org/pod/Try%3A%3ATiny)
 - [URI](https://metacpan.org/pod/URI)
 - [Unexpected](https://metacpan.org/pod/Unexpected)
 

@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+0.21.1    2025-05-19 16:41:16
           - Fixes delete_on_collect bug
           - Finds the upload object in any of the args not just the first
           - Adds exceptions imported by Web::Components
