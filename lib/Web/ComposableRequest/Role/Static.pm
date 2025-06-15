@@ -10,7 +10,9 @@ use Moo::Role;
 requires qw( locale path query_params scheme _base );
 
 around '_build__base' => sub {
-   my ($orig, $self) = @_; $self->mode eq 'static' or return $orig->( $self );
+   my ($orig, $self) = @_;
+
+   return $orig->( $self ) unless $self->mode eq 'static';
 
    my $count = () = split m{ / }mx, $self->path, -1;
 
@@ -18,40 +20,48 @@ around '_build__base' => sub {
 };
 
 around '_build_uri' => sub {
-   my ($orig, $self) = @_; $self->mode eq 'static' or return $orig->( $self );
+   my ($orig, $self) = @_;
 
-   my $path = $self->_base.$self->locale.'/'.$self->path.'.html';
+   return $orig->( $self ) unless $self->mode eq 'static';
+
+   my $path = $self->_base . $self->locale . '/' . $self->path . '.html';
 
    return new_uri $self->scheme, $path;
 };
 
 around 'uri_for' => sub {
-   my ($orig, $self, $path, @args) = @_; $path //= NUL;
+   my ($orig, $self, $path, @args) = @_;
 
-   ($self->mode eq 'static' and '/' ne substr $path, -1, 1)
-      or return $orig->( $self, $path, @args );
+   $path //= NUL;
 
-   my $base = $self->_base; my $extn = '.html';
+   return $orig->( $self, $path, @args )
+      unless $self->mode eq 'static' and '/' ne substr $path, -1, 1;
 
-   my @query_params = (); my $uri_params = [];
+   my $base = $self->_base;
+   my $extn = '.html';
+   my @query_params = ();
+   my $uri_params = [];
 
    if (is_arrayref $args[ 0 ]) {
-      $uri_params = shift @args; @query_params = @args;
+      $uri_params = shift @args;
+      @query_params = @args;
    }
    elsif (is_hashref $args[ 0 ]) {
       $uri_params   =    $args[ 0 ]->{uri_params  } // [];
       @query_params = @{ $args[ 0 ]->{query_params} // [] };
-      $args[ 0 ]->{base     } and $base = $args[ 0 ]->{base     };
-      $args[ 0 ]->{extension} and $extn = $args[ 0 ]->{extension};
+      $base = $args[ 0 ]->{base     } if $args[ 0 ]->{base     };
+      $extn = $args[ 0 ]->{extension} if $args[ 0 ]->{extension};
    }
 
-   $path or $path = 'index'; $path = $base.$self->locale."/${path}";
+   $path = 'index' unless $path;
 
-   $uri_params->[ 0 ] and $path = join '/', $path, @{ $uri_params };
+   $path = $base.$self->locale."/${path}";
+
+   $path = join '/', $path, @{ $uri_params } if $uri_params->[ 0 ];
 
    my $uri = new_uri $self->scheme, $path.$extn;
 
-   $query_params[ 0 ] and $uri->query_form( @query_params );
+   $uri->query_form( @query_params ) if $query_params[ 0 ];
 
    return $uri;
 };

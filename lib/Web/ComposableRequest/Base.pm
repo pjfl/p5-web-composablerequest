@@ -1,26 +1,35 @@
 package Web::ComposableRequest::Base;
 
-use namespace::autoclean;
-
-use HTTP::Body;
 use HTTP::Status                      qw( HTTP_EXPECTATION_FAILED
                                           HTTP_INTERNAL_SERVER_ERROR
                                           HTTP_REQUEST_ENTITY_TOO_LARGE );
-use Scalar::Util                      qw( weaken );
-use Try::Tiny;
 use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS NUL TRUE );
-use Web::ComposableRequest::Util      qw( decode_array decode_hash first_char
-                                          is_arrayref is_hashref new_uri
-                                          throw );
-use Unexpected::Functions             qw( Unspecified );
 use Unexpected::Types                 qw( ArrayRef CodeRef HashRef LoadableClass
                                           NonEmptySimpleStr NonZeroPositiveInt
                                           Object PositiveInt SimpleStr Str
                                           Undef );
+use Scalar::Util                      qw( weaken );
+use Web::ComposableRequest::Util      qw( decode_array decode_hash first_char
+                                          is_arrayref is_hashref new_uri
+                                          throw );
+use Unexpected::Functions             qw( Unspecified );
+use HTTP::Body;
+use Try::Tiny;
 use Moo;
 
-# Attribute constructors
-my $_build_body = sub {
+# Public attributes
+has 'address' =>
+   is      => 'lazy',
+   isa     => SimpleStr,
+   default => sub { $_[0]->_env->{'REMOTE_ADDR'} // NUL };
+
+has 'base' =>
+   is       => 'lazy',
+   isa      => Object,
+   init_arg => undef,
+   default  => sub { new_uri $_[0]->scheme, $_[0]->_base };
+
+has 'body' => is => 'lazy', isa => Object, default => sub {
    my $self    = shift;
    my $content = $self->_content;
    my $len     = length $content;
@@ -41,16 +50,96 @@ my $_build_body = sub {
    return $body;
 };
 
-my $_build__content = sub {
+has 'content_length' => is => 'lazy', isa => PositiveInt,
+   default           => sub { $_[0]->_env->{ 'CONTENT_LENGTH' } // 0 };
+
+has 'content_type' => is => 'lazy', isa => SimpleStr,
+   default         => sub { $_[0]->_env->{ 'CONTENT_TYPE' } // NUL };
+
+has 'host' => is => 'lazy', isa => NonEmptySimpleStr,
+   default => sub { (split m{ : }mx, $_[0]->hostport)[0] };
+
+has 'hostport' => is => 'lazy', isa => NonEmptySimpleStr,
+   default     => sub { $_[0]->_env->{ 'HTTP_HOST' } // 'localhost' };
+
+has 'method' => is => 'lazy', isa => SimpleStr,
+   default   => sub { lc( $_[0]->_env->{ 'REQUEST_METHOD' } // NUL )};
+
+has 'path' => is => 'lazy', isa => SimpleStr, default => sub {
+   my $v = $_[0]->_env->{'PATH_INFO'} // '/';
+
+   $v =~ s{ \A / }{}mx; $v =~ s{ \? .* \z }{}mx;
+
+   return $v;
+};
+
+has 'port' => is => 'lazy', isa => NonZeroPositiveInt,
+   default => sub { $_[0]->_env->{ 'SERVER_PORT' } // 80 };
+
+has 'protocol' => is => 'lazy', isa => NonEmptySimpleStr,
+   default     => sub { $_[0]->_env->{ 'SERVER_PROTOCOL' } };
+
+has 'query' => is => 'lazy', isa => Str, default => sub {
+   my $v = $_[0]->_env->{'QUERY_STRING'};
+
+   return $v ? "?${v}" : NUL;
+};
+
+has 'referer' => is => 'lazy', isa => Str,
+   default    => sub { $_[0]->_env->{ 'HTTP_REFERER' } // NUL };
+
+has 'remote_host' => is => 'lazy', isa => SimpleStr,
+   default        => sub { $_[0]->_env->{ 'REMOTE_HOST' } // NUL };
+
+has 'scheme' => is => 'lazy', isa => NonEmptySimpleStr,
+   default   => sub { $_[0]->_env->{ 'psgi.url_scheme' } // 'http' };
+
+has 'script' => is => 'lazy', isa => SimpleStr, default => sub {
+   my $v = $_[0]->_env->{'SCRIPT_NAME'} // '/';
+
+   $v =~ s{ / \z }{}gmx;
+
+   return $v;
+};
+
+has 'tunnel_method'  => is => 'lazy', isa => NonEmptySimpleStr, default => sub {
+   return $_[0]->body_params->(  '_method', { optional => TRUE } )
+       || $_[0]->query_params->( '_method', { optional => TRUE } )
+       || 'not_found';
+};
+
+has 'upload' => is => 'lazy', isa => Object | Undef, predicate => TRUE;
+
+has 'uri' => is => 'lazy', isa => Object, builder => '_build_uri';
+
+# Private attributes
+has '_args' =>
+   is       => 'ro',
+   isa      => ArrayRef,
+   init_arg => 'args',
+   default  => sub { [] };
+
+has '_base' =>
+   is      => 'lazy',
+   isa     => NonEmptySimpleStr,
+   builder => '_build__base';
+
+has '_config' =>
+   is       => 'ro',
+   isa      => Object,
+   init_arg => 'config',
+   required => TRUE;
+
+has '_content' => is => 'lazy', isa => Str, default => sub {
    my $self    = shift;
-   my $cl      = $self->content_length  or return NUL;
+   my $cl      = $self->content_length or return NUL;
    my $fh      = $self->_env->{ 'psgi.input' } or return NUL;
    my $content = NUL;
 
    try {
-      $fh->can( 'seek' ) and $fh->seek( 0, 0 );
+      $fh->seek( 0, 0 ) if $fh->can( 'seek' );
       $fh->read( $content, $cl, 0 );
-      $fh->can( 'seek' ) and $fh->seek( 0, 0 );
+      $fh->seek( 0, 0 ) if $fh->can( 'seek' );
    }
    catch {
       # uncoverable subroutine
@@ -61,94 +150,19 @@ my $_build__content = sub {
    return $content;
 };
 
-my $_build_tunnel_method = sub {
-   return $_[ 0 ]->body_params->(  '_method', { optional => TRUE } )
-       || $_[ 0 ]->query_params->( '_method', { optional => TRUE } )
-       || 'not_found';
-};
+has '_env' => is => 'ro', isa => HashRef, init_arg => 'env', required => TRUE;
 
-# Public attributes
-has 'address'        => is => 'lazy', isa => SimpleStr,
-   builder           => sub { $_[ 0 ]->_env->{ 'REMOTE_ADDR' } // NUL };
+has '_log'  =>
+   is       => 'lazy',
+   isa      => CodeRef,
+   init_arg => 'log',
+   default  => sub { $_[0]->_env->{'psgix.logger'} // sub {} };
 
-has 'base'           => is => 'lazy', isa => Object,
-   builder           => sub { new_uri $_[ 0 ]->scheme, $_[ 0 ]->_base },
-   init_arg          => undef;
-
-has 'body'           => is => 'lazy', isa => Object, builder => $_build_body;
-
-has 'content_length' => is => 'lazy', isa => PositiveInt,
-   builder           => sub { $_[ 0 ]->_env->{ 'CONTENT_LENGTH' } // 0 };
-
-has 'content_type'   => is => 'lazy', isa => SimpleStr,
-   builder           => sub { $_[ 0 ]->_env->{ 'CONTENT_TYPE' } // NUL };
-
-has 'host'           => is => 'lazy', isa => NonEmptySimpleStr,
-   builder           => sub { (split m{ : }mx, $_[ 0 ]->hostport)[ 0 ] };
-
-has 'hostport'       => is => 'lazy', isa => NonEmptySimpleStr,
-   builder           => sub { $_[ 0 ]->_env->{ 'HTTP_HOST' } // 'localhost' };
-
-has 'method'         => is => 'lazy', isa => SimpleStr,
-   builder           => sub { lc( $_[ 0 ]->_env->{ 'REQUEST_METHOD' } // NUL )};
-
-has 'path'           => is => 'lazy', isa => SimpleStr, builder => sub {
-   my $v             =  $_[ 0 ]->_env->{ 'PATH_INFO' } // '/';
-      $v             =~ s{ \A / }{}mx; $v =~ s{ \? .* \z }{}mx; $v };
-
-has 'port'           => is => 'lazy', isa => NonZeroPositiveInt,
-   builder           => sub { $_[ 0 ]->_env->{ 'SERVER_PORT' } // 80 };
-
-has 'protocol'       => is => 'lazy', isa => NonEmptySimpleStr,
-   builder           => sub { $_[ 0 ]->_env->{ 'SERVER_PROTOCOL' } };
-
-has 'query'          => is => 'lazy', isa => Str, builder => sub {
-   my $v             =  $_[ 0 ]->_env->{ 'QUERY_STRING' }; $v ? "?${v}" : NUL };
-
-has 'referer'        => is => 'lazy', isa => Str,
-   builder           => sub { $_[ 0 ]->_env->{ 'HTTP_REFERER' } // NUL };
-
-has 'remote_host'    => is => 'lazy', isa => SimpleStr,
-   builder           => sub { $_[ 0 ]->_env->{ 'REMOTE_HOST' } // NUL };
-
-has 'scheme'         => is => 'lazy', isa => NonEmptySimpleStr,
-   builder           => sub { $_[ 0 ]->_env->{ 'psgi.url_scheme' } // 'http' };
-
-has 'script'         => is => 'lazy', isa => SimpleStr, builder => sub {
-   my $v             =  $_[ 0 ]->_env->{ 'SCRIPT_NAME' } // '/';
-      $v             =~ s{ / \z }{}gmx; $v };
-
-has 'tunnel_method'  => is => 'lazy', isa => NonEmptySimpleStr,
-   builder           => $_build_tunnel_method;
-
-has 'upload'         => is => 'lazy', isa => Object | Undef,
-   predicate         => TRUE;
-
-has 'uri'            => is => 'lazy', isa => Object, builder => sub {
-   new_uri $_[ 0 ]->scheme, $_[ 0 ]->_base.$_[ 0 ]->path.$_[ 0 ]->query };
-
-# Private attributes
-has '_args'    => is => 'ro',   isa => ArrayRef,
-   builder     => sub { [] }, init_arg => 'args';
-
-has '_base'    => is => 'lazy', isa => NonEmptySimpleStr, builder => sub {
-   $_[ 0 ]->scheme.'://'.$_[ 0 ]->hostport.$_[ 0 ]->script.'/' };
-
-has '_config'  => is => 'ro',   isa => Object,
-   required    => TRUE, init_arg => 'config';
-
-has '_content' => is => 'lazy', isa => Str,
-   builder     => $_build__content;
-
-has '_env'     => is => 'ro',   isa => HashRef,
-   init_arg    => 'env', required => TRUE;
-
-has '_log'     => is => 'lazy', isa => CodeRef,
-   builder     => sub { $_[ 0 ]->_env->{ 'psgix.logger' } // sub {} },
-   init_arg    => 'log';
-
-has '_params'  => is => 'ro',   isa => HashRef,
-   builder     => sub { {} }, init_arg => 'params';
+has '_params' =>
+   is       => 'ro',
+   isa      => HashRef,
+   init_arg => 'params',
+   default  => sub { {} };
 
 # Construction
 sub BUILD {
@@ -157,113 +171,6 @@ sub BUILD {
 
    decode_array $enc, $self->_args;
    decode_hash  $enc, $self->_params;
-
-   return;
-}
-
-# Private functions
-my $_defined_or_throw = sub {
-   my ($k, $v, $opts) = @_; $opts->{optional} and return $v;
-
-   $k =~ m{ \A \d+ \z }mx and $k = "arg[${k}]";
-
-   defined $v or throw 'Parameter [_1] undefined value', [ $k ],
-                       level => 6, rv => HTTP_EXPECTATION_FAILED;
-
-   return $v;
-};
-
-my $_get_last_value = sub {
-   my ($k, $v, $opts) = @_; return $_defined_or_throw->( $k, $v->[-1], $opts );
-};
-
-my $_get_value_or_values = sub {
-   my ($params, $name, $opts) = @_;
-
-   defined $name or throw Unspecified, [ 'name' ],
-                          level => 5, rv => HTTP_INTERNAL_SERVER_ERROR;
-
-   my $v = (is_arrayref $params and $name eq '-1') ? [ @{ $params } ]
-         : (is_arrayref $params                  ) ? $params->[ $name ]
-         : (                        $name eq '-1') ? { %{ $params } }
-                                                   : $params->{ $name };
-
-   return $_defined_or_throw->( $name, $v, $opts );
-};
-
-my $_get_defined_value = sub {
-   my ($params, $name, $opts) = @_;
-
-   my $v = $_get_value_or_values->( $params, $name, $opts );
-
-   return (is_arrayref $v) ? $_get_last_value->( $name, $v, $opts ) : $v;
-};
-
-my $_get_defined_values = sub {
-   my ($params, $name, $opts) = @_;
-
-   my $v = $_get_value_or_values->( $params, $name, $opts );
-
-   return (is_arrayref $v) ? $v : [ $v ];
-};
-
-my $_scrub_value = sub {
-   my ($name, $v, $opts) = @_; my $pattern = $opts->{scrubber}; my $len;
-
-   $pattern and defined $v and $v =~ s{ $pattern }{}gmx;
-
-   $name =~ m{ \A [\-]? \d+ \z }mx and $name = "arg[${name}]";
-
-   $opts->{optional} or $opts->{allow_null} or $len = length $v
-      or  throw Unspecified, [ $name ], level => 4,
-                rv => HTTP_EXPECTATION_FAILED;
-
-   $len and $len > $opts->{max_length}
-      and throw 'Parameter [_1] size [_2] too big', [ $name, $len ], level => 4,
-                rv => HTTP_REQUEST_ENTITY_TOO_LARGE;
-   return $v;
-};
-
-my $_scrub_hash = sub {
-   my ($params, $opts) = @_;
-
-   my $hash = $_get_defined_value->( $params, -1, $opts );
-   my @keys = keys %{ $hash };
-
-   for my $k (@keys) {
-      my $v = delete $hash->{ $k };
-
-      $hash->{ $_scrub_value->( 'key', $k, $opts ) }
-         = (is_arrayref $v && $opts->{multiple}) ?
-            [ map { $_scrub_value->( $k, $_, $opts ) } @{ $v } ]
-         : (is_arrayref $v) ? $_get_last_value->( $k, $v, $opts )
-         : $_scrub_value->( $k, $v, $opts );
-   }
-
-   return $hash;
-};
-
-my $_get_scrubbed_param = sub {
-   my ($self, $params, $name, $opts) = @_; $opts = { %{ $opts // {} } };
-
-   $opts->{max_length} //= $self->_config->max_asset_size;
-   $opts->{scrubber  } //= $self->_config->scrubber;
-   $opts->{hashref   } and return $_scrub_hash->( $params, $opts );
-   $opts->{multiple  } and return
-      [ map { $opts->{raw} ? $_ : $_scrub_value->( $name, $_, $opts ) }
-           @{ $_get_defined_values->( $params, $name, $opts ) } ];
-
-   my $v = $_get_defined_value->( $params, $name, $opts );
-
-   return $opts->{raw} ? $v : $_scrub_value->( $name, $v, $opts );
-};
-
-# Private methods
-sub _decode_body {
-   my ($self, $body, $content) = @_;
-
-   $body->add( $content );
-   decode_hash $self->_config->encoding, $body->param;
 
    return;
 }
@@ -277,8 +184,8 @@ sub body_params {
    weaken($params) if ref $params;
 
    return sub {
-      return $_get_scrubbed_param->(
-         $self, $params, (defined $_[0] && !is_hashref $_[0])
+      return $self->_get_scrubbed_param(
+         $params, (defined $_[0] && !is_hashref $_[0])
             ? @_ : (-1, { hashref => TRUE, %{ $_[0] // {} } })
       );
    };
@@ -290,15 +197,17 @@ sub query_params {
    my $params = $self->_params; weaken( $params );
 
    return sub {
-      return $_get_scrubbed_param->(
-         $self, $params, (defined $_[0] && !is_hashref $_[0])
+      return $self->_get_scrubbed_param(
+         $params, (defined $_[0] && !is_hashref $_[0])
             ? @_ : (-1, { hashref => TRUE, %{ $_[0] // {} } })
       );
    };
 }
 
 sub uri_for {
-   my ($self, $path, @args) = @_; $path //= NUL;
+   my ($self, $path, @args) = @_;
+
+   $path //= NUL;
 
    my $base = $self->_base;
    my @query_params = ();
@@ -342,11 +251,138 @@ sub uri_params {
    my $params = $self->_args; weaken( $params );
 
    return sub {
-      return $_get_scrubbed_param->
-         ( $self, $params, (defined $_[ 0 ] && !is_hashref $_[ 0 ])
-           ? @_ : (-1, { %{ $_[ 0 ] // {} }, multiple => TRUE }) );
+      return $self->_get_scrubbed_param(
+         $params, (defined $_[0] && !is_hashref $_[0])
+         ? @_ : (-1, { %{ $_[0] // {} }, multiple => TRUE })
+      );
    };
 }
+
+# Private functions
+my $_defined_or_throw = sub {
+   my ($k, $v, $opts) = @_;
+
+   return $v if $opts->{optional};
+
+   $k = "arg[${k}]" if $k =~ m{ \A \d+ \z }mx;
+
+   throw 'Parameter [_1] undefined value', [ $k ],
+      level => 6, rv => HTTP_EXPECTATION_FAILED unless defined $v;
+
+   return $v;
+};
+
+my $_get_last_value = sub {
+   my ($k, $v, $opts) = @_; return $_defined_or_throw->( $k, $v->[-1], $opts );
+};
+
+my $_get_value_or_values = sub {
+   my ($params, $name, $opts) = @_;
+
+   throw Unspecified, [ 'name' ], level => 5, rv => HTTP_INTERNAL_SERVER_ERROR
+      unless defined $name;
+
+   my $v = (is_arrayref $params and $name eq '-1') ? [ @{ $params } ]
+         : (is_arrayref $params                  ) ? $params->[ $name ]
+         : (                        $name eq '-1') ? { %{ $params } }
+                                                   : $params->{ $name };
+
+   return $_defined_or_throw->( $name, $v, $opts );
+};
+
+my $_get_defined_value = sub {
+   my ($params, $name, $opts) = @_;
+
+   my $v = $_get_value_or_values->( $params, $name, $opts );
+
+   return (is_arrayref $v) ? $_get_last_value->( $name, $v, $opts ) : $v;
+};
+
+my $_get_defined_values = sub {
+   my ($params, $name, $opts) = @_;
+
+   my $v = $_get_value_or_values->( $params, $name, $opts );
+
+   return (is_arrayref $v) ? $v : [ $v ];
+};
+
+my $_scrub_value = sub {
+   my ($name, $v, $opts) = @_;
+
+   my $pattern = $opts->{scrubber};
+
+   $v =~ s{ $pattern }{}gmx if $pattern and defined $v;
+
+   $name = "arg[${name}]" if $name =~ m{ \A [\-]? \d+ \z }mx;
+
+   my $len = defined $v ? length $v : 0;
+
+   throw Unspecified, [ $name ], level => 4, rv => HTTP_EXPECTATION_FAILED
+      unless $opts->{optional} or $opts->{allow_null} or $len;
+
+   throw 'Parameter [_1] size [_2] too big', [ $name, $len ], level => 4,
+      rv => HTTP_REQUEST_ENTITY_TOO_LARGE if $len > $opts->{max_length};
+
+   return $v;
+};
+
+my $_scrub_hash = sub {
+   my ($params, $opts) = @_;
+
+   my $hash = $_get_defined_value->( $params, -1, $opts );
+   my @keys = keys %{ $hash };
+
+   for my $k (@keys) {
+      my $v = delete $hash->{ $k };
+
+      $hash->{ $_scrub_value->( 'key', $k, $opts ) }
+         = (is_arrayref $v && $opts->{multiple}) ?
+            [ map { $_scrub_value->( $k, $_, $opts ) } @{ $v } ]
+         : (is_arrayref $v) ? $_get_last_value->( $k, $v, $opts )
+         : $_scrub_value->( $k, $v, $opts );
+   }
+
+   return $hash;
+};
+
+# Private methods
+sub _build__base {
+   return $_[0]->scheme . '://' . $_[0]->hostport . $_[0]->script . '/';
+}
+
+sub _build_uri {
+   return new_uri $_[0]->scheme, $_[0]->_base . $_[0]->path . $_[0]->query;
+}
+
+sub _decode_body {
+   my ($self, $body, $content) = @_;
+
+   $body->add( $content );
+   decode_hash $self->_config->encoding, $body->param;
+
+   return;
+}
+
+sub _get_scrubbed_param {
+   my ($self, $params, $name, $opts) = @_;
+
+   $opts = { %{ $opts // {} } };
+   $opts->{max_length} //= $self->_config->max_asset_size;
+   $opts->{scrubber} //= $self->_config->scrubber;
+
+   return $_scrub_hash->( $params, $opts ) if $opts->{hashref};
+
+   if ($opts->{multiple}) {
+      return [ map { $opts->{raw} ? $_ : $_scrub_value->( $name, $_, $opts ) }
+                  @{ $_get_defined_values->( $params, $name, $opts ) } ];
+   }
+
+   my $v = $_get_defined_value->( $params, $name, $opts );
+
+   return $opts->{raw} ? $v : $_scrub_value->( $name, $v, $opts );
+}
+
+use namespace::autoclean;
 
 1;
 
@@ -387,7 +423,7 @@ Web::ComposableRequest::Base - Request class core attributes and methods
    };
 
    has 'request_class' => is => 'lazy', isa => NonEmptySimpleStr,
-      builder          => $_build_request_class;
+      default          => $_build_request_class;
 
 =head1 Description
 

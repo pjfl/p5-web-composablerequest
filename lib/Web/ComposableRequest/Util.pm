@@ -122,9 +122,11 @@ my $_base64_encode_ns = sub {
 };
 
 my $_bsonid_inc = sub {
-   my $now = shift; $bson_id_count++;
+   my $now = shift;
 
-   $now > $bson_prev_time and $bson_id_count = 0; $bson_prev_time = $now;
+   $bson_id_count++;
+   $bson_id_count = 0 if $now > $bson_prev_time;
+   $bson_prev_time = $now;
 
    return (pack 'n', thread_id() % 0xFFFF ).(pack 'n', $bson_id_count % 0xFFFF);
 };
@@ -136,7 +138,8 @@ my $_bsonid_time = sub {
 };
 
 my $_bson_id = sub {
-   my $now = time; my $pid = pack 'n', $PID % 0xFFFF;
+   my $now = time;
+   my $pid = pack 'n', $PID % 0xFFFF;
 
    return $_bsonid_time->( $now ).$host_id.$pid.$_bsonid_inc->( $now );
 };

@@ -1,5 +1,7 @@
 Revision history for Web::ComposableRequest
 
+          - Code style improvements
+
 0.22.1    2025-05-19 17:22:37
           - Fix dependency specification
 
