@@ -64,6 +64,10 @@ An integer which defaults to one. The exception return value
 
 Differentiate the constructor method signatures
 
+=head2 C<BUILD>
+
+Called after object construction
+
 =head2 C<as_string>
 
 Stringifies the exception error message

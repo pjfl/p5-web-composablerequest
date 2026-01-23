@@ -63,6 +63,10 @@ L<Web::ComposableRequest::Exception>
 
 =head1 Subroutines/Methods
 
+=head2 C<COMMA>
+
+The comma character
+
 =head2 C<EXCEPTION_CLASS>
 
 The value of the L</Exception_Class> attribute
@@ -78,6 +82,10 @@ The default language C<en>
 =head2 C<NUL>
 
 The null (zero length) string
+
+=head2 C<SPC>
+
+The space character
 
 =head2 C<TRUE>
 

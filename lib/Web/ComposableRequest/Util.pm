@@ -3,33 +3,34 @@ package Web::ComposableRequest::Util;
 use strictures;
 use parent 'Exporter::Tiny';
 
+use Web::ComposableRequest::Constants
+                  qw( EXCEPTION_CLASS LANG );
 use Digest::MD5   qw( md5 md5_hex );
 use Encode        qw( decode );
 use English       qw( -no_match_vars );
 use List::Util    qw( first );
 use Scalar::Util  qw( blessed );
-use Subclass::Of;
 use Sys::Hostname qw( hostname );
 use URI::Escape   qw( );
+use Subclass::Of;
 use URI::http;
 use URI::https;
-use Web::ComposableRequest::Constants qw( EXCEPTION_CLASS LANG );
 
-our @EXPORT_OK  = qw( add_config_role base64_decode_ns base64_encode_ns bson64id
-                      bson64id_time compose_class decode_array decode_hash
-                      extract_lang first_char is_arrayref is_hashref is_member
-                      list_config_roles merge_attributes new_uri trim thread_id
-                      throw uri_escape );
+our @EXPORT_OK = qw( add_config_role base64_decode_ns base64_encode_ns bson64id
+                     bson64id_time compose_class decode_array decode_hash
+                     extract_lang first_char is_arrayref is_hashref is_member
+                     list_config_roles merge_attributes new_uri trim thread_id
+                     throw uri_escape );
 
 my $bson_id_count  = 0;
 my $bson_prev_time = 0;
 my $class_stash    = {};
 my @config_roles   = ();
-my $host_id        = substr md5( hostname ), 0, 3;
+my $host_id        = substr md5(hostname), 0, 3;
 my $reserved       = q(;/?:@&=+$,[]);
 my $mark           = q(-_.!~*'());                                   #'; emacs
 my $unreserved     = "A-Za-z0-9\Q${mark}\E%\#";
-my $uric           = quotemeta( $reserved ) . '\p{isAlpha}' . $unreserved;
+my $uric           = quotemeta($reserved) . '\p{isAlpha}' . $unreserved;
 
 # Private functions
 my $_base64_char_set = sub {

@@ -68,7 +68,7 @@ has 'max_messages' => is => 'ro', isa => NonZeroPositiveInt,
 has 'max_sess_time' => is => 'ro', isa => PositiveInt,
    default => 3_600;
 
-has 'serialise_session_attr' => is => 'ro', isa => ArrayRef[NonEmptySimpleStr],
+has 'serialise_attr' => is => 'ro', isa => ArrayRef[NonEmptySimpleStr],
    default => sub { [] };
 
 has 'session_attr' => is => 'ro', isa => HashRef[ArrayRef],
@@ -140,6 +140,11 @@ to keep in the queue
 A positive integer that defaults to 3600 seconds (one hour). The maximum amount
 of time a session can be idle before re-authentication is required. Setting
 this to zero disables the feature
+
+=item C<serialise_attr>
+
+An array reference of session attributes to be serialised by the C<serialise>
+method
 
 =item C<session_attr>
 

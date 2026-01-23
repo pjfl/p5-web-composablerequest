@@ -1,5 +1,6 @@
 Revision history for Web::ComposableRequest
 
+          - Added remote_address. Checks for forwarded IP address
           - Code style improvements
 
 0.22.1    2025-05-19 17:22:37

@@ -126,8 +126,8 @@ sub serialise {
    my $self   = shift;
    my $string = NUL;
 
-   for my $attr (@{$self->_config->serialise_session_attr}) {
-      $string .= COMMA . "${attr}:" . $self->$attr;
+   for my $attr (@{$self->_config->serialise_attr}) {
+      $string .= ($string ? COMMA : NUL) . "${attr}:" . $self->$attr;
    }
 
    return $string;
@@ -285,6 +285,13 @@ Returns the next message in the queue (if there is one) for the given request
 
 Returns previous messages in the queue (if there are any) for the given request
 or any previous requests
+
+=head2 C<serialise>
+
+   $csv_string = $session->serialise;
+
+Returns a comma separated list of attribute values. Attributes are selected
+by the C<serialise_attr> configuration attribute
 
 =head2 C<trim_message_queue>
 

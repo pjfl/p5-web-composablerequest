@@ -35,14 +35,18 @@ __END__
 
 =head1 Name
 
-Web::ComposableRequest::Role::Headers - Composable request class for web frameworks
+Web::ComposableRequest::Role::Headers - Returns header attribute values
 
 =head1 Synopsis
 
-   use Web::ComposableRequest::Role::Headers;
-   # Brief but working code examples
+   use Moo;
+
+   extends 'Web::ComposableRequest::Base';
+   with 'Web::ComposableRequest::Role::Headers';
 
 =head1 Description
+
+Returns header attribute values
 
 =head1 Configuration and Environment
 
@@ -54,13 +58,27 @@ Defines the following attributes;
 
 =head1 Subroutines/Methods
 
+Defines the following methods;
+
+=over 3
+
+=item C<header>
+
+   $value = $session->header($attribute_name);
+
+Returns the named header attribute value
+
+=back
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
-=item L<Class::Usul>
+=item L<Moo::Role>
 
 =back
 
