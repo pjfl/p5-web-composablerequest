@@ -60,7 +60,7 @@ use Moo::Role;
 has 'delete_on_collect' => is => 'ro', isa => Bool, default => TRUE;
 
 has 'expire_session' => is => 'lazy', isa => CodeRef,
-   default => sub { sub { [ 'User [_1] session expired', $_[ 0 ]->username ] }};
+   default => sub { sub { [ 'User [_1] session expired', $_[0]->username ] } };
 
 has 'max_messages' => is => 'ro', isa => NonZeroPositiveInt,
    default => 3;

@@ -1,7 +1,5 @@
 package Web::ComposableRequest::Session;
 
-use namespace::autoclean;
-
 use Web::ComposableRequest::Constants qw( COMMA EXCEPTION_CLASS FALSE NUL TRUE);
 use Web::ComposableRequest::Util      qw( bson64id is_arrayref throw );
 use Unexpected::Types                 qw( ArrayRef Bool HashRef
@@ -12,22 +10,32 @@ use Moo;
 # Public attributes
 has 'authenticated' => is => 'rw',  isa => Bool, default => FALSE;
 
-has 'messages' => is => 'ro', isa => HashRef[ArrayRef], builder => sub { {} };
+has 'messages' => is => 'ro', isa => HashRef[HashRef], builder => sub { {} };
 
 has 'updated' => is => 'ro', isa => NonZeroPositiveInt, required => TRUE;
 
 has 'username' => is => 'rw', isa => SimpleStr, default => NUL;
 
 # Private attributes
-has '_config' => is => 'ro', isa => Object, init_arg => 'config',
+has '_config' =>
+   is       => 'ro',
+   isa      => Object,
+   init_arg => 'config',
    required => TRUE;
 
 has '_mid' => is => 'rwp', isa => NonEmptySimpleStr | Undef;
 
-has '_request' => is => 'ro', isa => Object, init_arg => 'request',
-   required => TRUE, weak_ref => TRUE;
+has '_request' =>
+   is       => 'ro',
+   isa      => Object,
+   init_arg => 'request',
+   required => TRUE,
+   weak_ref => TRUE;
 
-has '_session' => is => 'ro', isa => HashRef, init_arg => 'session',
+has '_session' =>
+   is       => 'ro',
+   isa      => HashRef,
+   init_arg => 'session',
    required => TRUE;
 
 # Construction
@@ -48,33 +56,38 @@ around 'BUILDARGS' => sub {
 
 sub BUILD {
    my $self     = shift;
-   my $conf     = $self->_config;
-   my $max_time = $conf->max_sess_time;
+   my $config   = $self->_config;
+   my $max_time = $config->max_sess_time or return;
 
-   if ($self->authenticated and $max_time
-       and time > $self->updated + $max_time) {
-      my $req = $self->_request;
-      my $msg = $conf->expire_session->($self, $req);
+   return unless $self->authenticated and time > $self->updated + $max_time;
 
-      $self->authenticated(FALSE);
-      $self->_set__mid($self->add_status_message($msg));
-      $req->_log->({
-         level   => 'debug',
-         message => $req->loc_default(@{$msg}),
-         name    => 'Session.build'
-      });
-   }
+   my $req     = $self->_request;
+   my $message = $config->expire_session->($self, $req);
+   my $options = { status => 'alert' };
+
+   $self->authenticated(FALSE);
+   $self->_set__mid($self->add_status_message($message, $options));
+   $req->_log->({
+      level   => 'debug',
+      message => $req->loc_default(@{$message}),
+      name    => 'Session.build'
+   });
 
    return;
 }
 
 # Public methods
 sub add_status_message {
-   my ($self, $msg) = @_;
+   my ($self, $message, $options) = @_;
 
-   is_arrayref $msg or throw 'Parameter [_1] not an array reference', [$msg];
+   throw 'Parameter [_1] not an array reference', [$message]
+      unless is_arrayref $message;
 
-   $self->messages->{ my $mid = bson64id } = $msg;
+   $options //= {};
+
+   my $mid = bson64id;
+
+   $self->messages->{$mid} = { %{$options}, message => $message };
 
    return $mid;
 }
@@ -87,39 +100,44 @@ sub collect_message_id {
 }
 
 sub collect_status_message {
-   my ($self, $req) = @_;
+   my ($self, $req, $options) = @_;
 
-   for my $mid ($self->_mid, $req->query_params->('mid', { optional => TRUE })){
-      next unless $mid;
+   $options //= { want => 'string' };
 
-      my $msg = $self->messages->{$mid} or next;
+   my $mid  = $self->collect_message_id($req) or return;
+   my $item = $self->messages->{$mid} or return;
 
-      delete $self->messages->{$mid} if $self->_config->delete_on_collect;
-      return $req->loc(@{$msg});
-   }
+   delete $self->messages->{$mid} if $self->_config->delete_on_collect;
 
-   return;
+   return $item if $options->{want} eq 'object';
+
+   return $req->loc(@{$item->{message}});
 }
 
 sub collect_status_messages {
-   my ($self, $req) = @_;
+   my ($self, $req, $options) = @_;
 
-   my @messages = ();
-   my $mid = $req->query_params->('mid', { optional => TRUE })
-      or return \@messages;
+   $options //= { want => 'string' };
 
-   my @keys = reverse sort keys %{$self->messages};
+   my @items = ();
+   my $mid   = $req->query_params->('mid', { optional => TRUE })
+      or return \@items;
+   my @keys  = reverse sort keys %{$self->messages};
 
    while (my $key = shift @keys) {
       next if $key gt $mid;
 
-      my $msg = $self->messages->{$key} or next;
+      my $item = $self->messages->{$key} or next;
 
       delete $self->messages->{$key} if $self->_config->delete_on_collect;
-      push @messages, $req->loc(@{$msg});
+
+      $item->{message} = $req->loc(@{$item->{message}});
+      push @items, $item;
    }
 
-   return \@messages;
+   return \@items if $options->{want} eq 'object';
+
+   return [map { $_->{message} } @items];
 }
 
 sub serialise {
@@ -163,11 +181,13 @@ before 'update' => sub {
 
 # Private functions
 sub _session_attr {
-   my $conf   = shift;
+   my $config = shift;
    my @public = qw( authenticated messages updated username );
 
-   return keys %{$conf->session_attr}, @public;
+   return keys %{$config->session_attr}, @public;
 }
+
+use namespace::autoclean;
 
 1;
 
